@@ -264,8 +264,8 @@
             <div class="card-title">${r.name}</div>
             <span class="badge badge-sport">${r.type}</span>
           </div>
-          <div class="grade">${r.grade_french} <span>/ ${r.grade_uiaa}</span></div>
-          <div class="card-meta">${r.length_m}m · ${r.num_bolts} bolts</div>
+<div class="grade">${r.grade_french || r.grade_alpine || ''} <span>${r.grade_uiaa ? '/ ' + r.grade_uiaa : ''}</span></div>
+          <div class="card-meta">${r.length_m ? r.length_m + 'm' : ''} ${r.num_bolts ? '· ' + r.num_bolts + ' bolts' : ''}</div>
           <div class="card-desc">${r.description}</div>
         </div>
       `).join('');
