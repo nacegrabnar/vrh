@@ -46,6 +46,13 @@
     .difficulty-hard { color: #f87171; }
     .trail-stats { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
     .trail-stat { font-size: 12px; color: #888; background: #222; padding: 3px 8px; border-radius: 4px; }
+    .auth-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid #333; background: none; color: #aaa; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+    .auth-btn:hover { border-color: #555; color: #fff; }
+    .auth-btn.primary { background: #fff; color: #000; border-color: #fff; }
+    .auth-btn.primary:hover { background: #ddd; }
+    .auth-btn.full { width: 100%; padding: 10px; margin-top: 8px; }
+    .form-input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #0f1117; color: #fff; font-size: 14px; margin-bottom: 10px; outline: none; }
+    .form-input:focus { border-color: #555; }
   </style>
 </head>
 <body>
@@ -55,8 +62,33 @@
       <h1>Vrh</h1>
       <span class="subtitle">Slovenia Outdoor</span>
     </div>
-    <input class="search-bar" type="text" id="search" placeholder="Search summits, routes, trails..." oninput="handleSearch()">
+    <div style="display:flex;gap:12px;align-items:center">
+      <input class="search-bar" type="text" id="search" placeholder="Search summits, routes, trails..." oninput="handleSearch()">
+      <div id="auth-buttons">
+        <button class="auth-btn" onclick="showModal('login')">Log in</button>
+        <button class="auth-btn primary" onclick="showModal('register')">Sign up</button>
+      </div>
+      <div id="user-menu" style="display:none">
+        <span id="username-display" style="font-size:14px;color:#aaa"></span>
+        <button class="auth-btn" onclick="logout()" style="margin-left:8px">Log out</button>
+      </div>
+    </div>
   </header>
+
+  <!-- Auth Modal -->
+  <div id="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;justify-content:center;align-items:center;">
+    <div style="background:#1a1d26;border:1px solid #333;border-radius:16px;padding:32px;width:360px;">
+      <h2 id="modal-title" style="margin-bottom:20px;font-size:20px"></h2>
+      <div id="modal-error" style="display:none;color:#f87171;font-size:13px;margin-bottom:12px;"></div>
+      <div id="register-fields">
+        <input class="form-input" type="text" id="reg-username" placeholder="Username">
+      </div>
+      <input class="form-input" type="email" id="auth-email" placeholder="Email">
+      <input class="form-input" type="password" id="auth-password" placeholder="Password">
+      <button class="auth-btn primary full" id="modal-submit" onclick="submitAuth()">Submit</button>
+      <button class="auth-btn full" onclick="closeModal()" style="margin-top:8px">Cancel</button>
+    </div>
+  </div>
 
   <div class="tabs">
     <button class="tab active" onclick="showTab('summits', this)">Summits</button>
@@ -201,7 +233,81 @@
       if (tab === 'trails') renderTrails(allTrails, 'Hiking & running trails');
     }
 
-    loadAll();
+    let currentUser = null;
+    let authMode = 'login';
+
+    function showModal(mode) {
+      authMode = mode;
+      document.getElementById('modal-title').textContent = mode === 'login' ? 'Log in' : 'Create account';
+      document.getElementById('register-fields').style.display = mode === 'register' ? 'block' : 'none';
+      document.getElementById('modal-error').style.display = 'none';
+      document.getElementById('modal-overlay').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').style.display = 'none';
+      document.getElementById('auth-email').value = '';
+      document.getElementById('auth-password').value = '';
+      document.getElementById('reg-username').value = '';
+    }
+
+    async function submitAuth() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      const errorEl = document.getElementById('modal-error');
+
+      let body = { email, password };
+      if (authMode === 'register') {
+        body.username = document.getElementById('reg-username').value;
+      }
+
+      try {
+        const res = await fetch(`/auth/${authMode}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errorEl.textContent = data.error;
+          errorEl.style.display = 'block';
+          return;
+        }
+        localStorage.setItem('vrh_token', data.token);
+        localStorage.setItem('vrh_user', JSON.stringify(data.user));
+        currentUser = data.user;
+        updateAuthUI();
+        closeModal();
+      } catch (err) {
+        errorEl.textContent = 'Something went wrong, please try again.';
+        errorEl.style.display = 'block';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('vrh_token');
+      localStorage.removeItem('vrh_user');
+      currentUser = null;
+      updateAuthUI();
+    }
+
+    function updateAuthUI() {
+      if (currentUser) {
+        document.getElementById('auth-buttons').style.display = 'none';
+        document.getElementById('user-menu').style.display = 'flex';
+        document.getElementById('username-display').textContent = `Hi, ${currentUser.username}!`;
+      } else {
+        document.getElementById('auth-buttons').style.display = 'flex';
+        document.getElementById('user-menu').style.display = 'none';
+      }
+    }
+
+    // Check if already logged in
+    const savedUser = localStorage.getItem('vrh_user');
+    if (savedUser) {
+      currentUser = JSON.parse(savedUser);
+      updateAuthUI();
+    }loadAll();
   </script>
 </body>
 </html>
