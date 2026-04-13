@@ -53,6 +53,11 @@
     .auth-btn.full { width: 100%; padding: 10px; margin-top: 8px; }
     .form-input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #0f1117; color: #fff; font-size: 14px; margin-bottom: 10px; outline: none; }
     .form-input:focus { border-color: #555; }
+    .status-good { color: #4ade80; }
+    .status-fair { color: #facc15; }
+    .status-poor { color: #f87171; }
+    .status-closed { color: #f87171; font-weight:600; }
+    .report-meta { font-size: 12px; color: #666; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -94,6 +99,7 @@
     <button class="tab active" onclick="showTab('summits', this)">Summits</button>
     <button class="tab" onclick="showTab('climbing', this)">Climbing Routes</button>
     <button class="tab" onclick="showTab('trails', this)">Trails</button>
+    <button class="tab" onclick="showTab('conditions', this)">Conditions</button>
   </div>
 
   <div class="container">
@@ -112,6 +118,31 @@
       <p class="section-title">Hiking & running trails</p>
       <div class="grid" id="trails-grid"><div class="loading">Loading trails...</div></div>
     </div>
+    <div id="conditions-view" style="display:none">
+      <div class="stats" id="conditions-stats"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <p class="section-title">Recent conditions reports</p>
+        <button class="auth-btn primary" onclick="showConditionsForm()" id="report-btn">+ Add report</button>
+      </div>
+      <div id="conditions-form" style="display:none;background:#1a1d26;border:1px solid #333;border-radius:12px;padding:20px;margin-bottom:20px;">
+        <h3 style="margin-bottom:16px;font-size:16px">New conditions report</h3>
+        <select class="form-input" id="report-type" onchange="updateReportSelect()">
+          <option value="trail">Trail</option>
+          <option value="climbing">Climbing route</option>
+        </select>
+        <select class="form-input" id="report-target"></select>
+        <select class="form-input" id="report-status">
+          <option value="good">Good conditions</option>
+          <option value="fair">Fair conditions</option>
+          <option value="poor">Poor conditions</option>
+          <option value="closed">Closed / dangerous</option>
+        </select>
+        <textarea class="form-input" id="report-notes" placeholder="Describe the conditions in detail..." rows="3" style="resize:vertical"></textarea>
+        <button class="auth-btn primary" onclick="submitConditions()">Submit report</button>
+        <button class="auth-btn" onclick="document.getElementById('conditions-form').style.display='none'" style="margin-left:8px">Cancel</button>
+      </div>
+      <div class="grid" id="conditions-grid"><div class="loading">Loading conditions...</div></div>
+    </div>
   </div>
 
   <script>
@@ -119,6 +150,70 @@
     let allSummits = [], allClimbing = [], allTrails = [];
     let currentTab = 'summits';
 
+    async function loadConditions() {
+      const res = await fetch('/conditions/recent');
+      const conditions = await res.json();
+      document.getElementById('conditions-stats').innerHTML = `
+        <div class="stat"><strong>${conditions.length}</strong> recent reports</div>
+      `;
+      const grid = document.getElementById('conditions-grid');
+      if (conditions.length === 0) {
+        grid.innerHTML = '<div class="empty">No conditions reports yet — be the first!</div>';
+        return;
+      }
+      grid.innerHTML = conditions.map(c => `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${c.trail_name || c.route_name}</div>
+            <span class="status-${c.status}">${c.status}</span>
+          </div>
+          <div class="card-desc">${c.notes || 'No details provided.'}</div>
+          <div class="report-meta">Reported by ${c.username} · ${new Date(c.reported_at).toLocaleDateString()}</div>
+        </div>
+      `).join('');
+    }
+
+    function showConditionsForm() {
+      document.getElementById('conditions-form').style.display = 'block';
+      updateReportSelect();
+    }
+
+    function updateReportSelect() {
+      const type = document.getElementById('report-type').value;
+      const select = document.getElementById('report-target');
+      const items = type === 'trail' ? allTrails : allClimbing;
+      select.innerHTML = items.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+    }
+
+    async function submitConditions() {
+      const token = localStorage.getItem('vrh_token');
+      const type = document.getElementById('report-type').value;
+      const targetId = document.getElementById('report-target').value;
+      const status = document.getElementById('report-status').value;
+      const notes = document.getElementById('report-notes').value;
+
+      const body = {
+        status,
+        notes,
+        trail_id: type === 'trail' ? targetId : null,
+        climbing_route_id: type === 'climbing' ? targetId : null
+      };
+
+      const res = await fetch('/conditions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        document.getElementById('conditions-form').style.display = 'none';
+        document.getElementById('report-notes').value = '';
+        loadConditions();
+      }
+    }
     async function loadAll() {
       const [summitsRes, climbingRes, trailsRes] = await Promise.all([
         fetch(`${API}/summits`),
@@ -227,6 +322,8 @@
       document.getElementById('summits-view').style.display = tab === 'summits' ? 'block' : 'none';
       document.getElementById('climbing-view').style.display = tab === 'climbing' ? 'block' : 'none';
       document.getElementById('trails-view').style.display = tab === 'trails' ? 'block' : 'none';
+      document.getElementById('conditions-view').style.display = tab === 'conditions' ? 'block' : 'none';
+      if (tab === 'conditions') { loadConditions(); document.getElementById('report-btn').style.display = 'block'; }
       document.getElementById('search').value = '';
       if (tab === 'summits') renderSummits(allSummits);
       if (tab === 'climbing') renderClimbing(allClimbing, 'Climbing routes');
