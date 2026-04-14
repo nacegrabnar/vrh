@@ -8,6 +8,8 @@ const trailsRouter = require('./routes/trails');
 const authRouter = require('./routes/auth');
 const conditionsRouter = require('./routes/conditions');
 const photosRouter = require('./routes/photos');
+const { router: adminRouter } = require('./routes/admin');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +28,11 @@ app.use('/trails', trailsRouter);
 app.use('/auth', authRouter);
 app.use('/conditions', conditionsRouter);
 app.use('/photos', photosRouter);
+app.use('/admin-api', adminRouter);
+
+app.get('/admin', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../client/admin.html'));
+});
 
 app.listen(PORT, () => {
   console.log(`Vrh server running on port ${PORT}`);

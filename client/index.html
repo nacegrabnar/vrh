@@ -34,6 +34,7 @@
     .badge-cycling { background: #1a3a3a; color: #34d399; }
     .card-meta { font-size: 12px; color: #666; margin-top: 3px; }
     .card-desc { font-size: 13px; color: #999; margin-top: 10px; line-height: 1.5; }
+    .card-desc-pending { font-size: 12px; color: #555; margin-top: 10px; font-style: italic; }
     .grade { font-size: 20px; font-weight: 700; color: #f59e0b; margin: 6px 0; }
     .grade span { font-size: 13px; color: #666; }
     .loading { color: #666; padding: 60px; text-align: center; font-size: 14px; }
@@ -98,6 +99,11 @@
     .lang-btn { padding:5px 11px; border-radius:6px; border:none; background:none; color:#555; cursor:pointer; font-size:12px; font-weight:700; letter-spacing:0.5px; transition:all 0.2s; }
     .lang-btn:hover { color:#ccc; }
     .lang-btn-active { background:#fff; color:#000; }
+    .primary-nav { display:flex; gap:6px; padding:20px 40px 0; border-bottom:1px solid #2a2d36; background:#0f1117; }
+    .primary-nav-btn { padding:9px 22px; border-radius:8px 8px 0 0; border:1px solid transparent; border-bottom:none; background:none; color:#555; cursor:pointer; font-size:14px; font-weight:600; transition:all 0.2s; letter-spacing:0.1px; position:relative; bottom:-1px; }
+    .primary-nav-btn:hover:not(.active) { color:#aaa; }
+    .primary-nav-btn.active { background:#1a1d26; color:#fff; border-color:#2a2d36; border-bottom-color:#1a1d26; }
+    .coming-soon-msg { color:#555; padding:100px 40px; text-align:center; font-size:16px; font-style:italic; letter-spacing:0.3px; }
   </style>
 </head>
 <body>
@@ -147,10 +153,15 @@
     </div>
   </div>
 
-  <div class="tabs">
+  <div class="primary-nav">
+    <button class="primary-nav-btn active" data-cat="hiking"       onclick="showCategory('hiking')">Hiking</button>
+    <button class="primary-nav-btn"        data-cat="climbing"     onclick="showCategory('climbing')">Climbing</button>
+    <button class="primary-nav-btn"        data-cat="trail_running" onclick="showCategory('trail_running')">Trail Running</button>
+    <button class="primary-nav-btn"        data-cat="cycling"      onclick="showCategory('cycling')">Cycling</button>
+  </div>
+  <div class="tabs" id="sub-tabs">
     <button class="tab active" data-tab="summits"    onclick="showTab('summits', this)">Summits</button>
     <button class="tab"        data-tab="hills"      onclick="showTab('hills', this)">Hills</button>
-    <button class="tab"        data-tab="climbing"   onclick="showTab('climbing', this)">Climbing Routes</button>
     <button class="tab"        data-tab="trails"     onclick="showTab('trails', this)">Trails</button>
     <button class="tab"        data-tab="conditions" onclick="showTab('conditions', this)">Conditions</button>
   </div>
@@ -201,12 +212,17 @@
       </div>
       <div class="grid" id="conditions-grid"><div class="loading">Loading conditions...</div></div>
     </div>
+    <div id="coming-soon-view" style="display:none">
+      <p class="coming-soon-msg" data-i18n="comingSoon">Coming soon / Kmalu na voljo</p>
+    </div>
   </div>
 
   <script>
     const API = '';
     let allSummits = [], allHills = [], allClimbing = [], allTrails = [];
     let currentTab = 'summits';
+    let currentCategory = 'hiking';
+    let currentHikingTab = 'summits';
 
     // ── i18n ──────────────────────────────────────────────────────
     const TRANSLATIONS = {
@@ -221,7 +237,14 @@
         noConditions:'No conditions reports yet — be the first!',
         statusGood:'Good conditions', statusFair:'Fair conditions',
         statusPoor:'Poor conditions', statusClosed:'Closed / dangerous',
-        loginTitle:'Log in', registerTitle:'Create account'
+        loginTitle:'Log in', registerTitle:'Create account',
+        difficulty: { hard:'hard', medium:'medium', easy:'easy' },
+        activityType: { hiking:'hiking', sport:'sport', alpine:'alpine', trail_running:'trail_running', cycling:'cycling' },
+        noSummitsFound: 'No summits found', noHillsFound: 'No hills found',
+        noRoutesFound: 'No routes found', noTrailsFound: 'No trails found',
+        bolts: 'bolts',
+        catHiking: 'Hiking', catClimbing: 'Climbing', catTrailRunning: 'Trail Running', catCycling: 'Cycling',
+        comingSoon: 'Coming soon / Kmalu na voljo'
       },
       sl: {
         tabs: { summits:'Vrhovi', hills:'Hribi', climbing:'Plezalne smeri', trails:'Poti', conditions:'Razmere' },
@@ -234,7 +257,14 @@
         noConditions:'Še ni poročil — bodi prvi!',
         statusGood:'Dobre razmere', statusFair:'Srednje razmere',
         statusPoor:'Slabe razmere', statusClosed:'Zaprto / nevarno',
-        loginTitle:'Prijava', registerTitle:'Ustvari račun'
+        loginTitle:'Prijava', registerTitle:'Ustvari račun',
+        difficulty: { hard:'zahtevno', medium:'srednje zahtevno', easy:'lahko' },
+        activityType: { hiking:'pohodništvo', sport:'športno plezanje', alpine:'alpinizem', trail_running:'tek v naravi', cycling:'kolesarjenje' },
+        noSummitsFound: 'Ni najdenih vrhov', noHillsFound: 'Ni najdenih hribov',
+        noRoutesFound: 'Ni najdenih smeri', noTrailsFound: 'Ni najdenih poti',
+        bolts: 'svedrov',
+        catHiking: 'Pohodništvo', catClimbing: 'Plezanje', catTrailRunning: 'Tek v naravi', catCycling: 'Kolesarjenje',
+        comingSoon: 'Kmalu na voljo / Coming soon'
       }
     };
     let lang = localStorage.getItem('vrh_lang') || 'en';
@@ -245,10 +275,25 @@
     function desc(item) {
       return (lang === 'sl' && item.description_sl) ? item.description_sl : (item.description || '');
     }
+    function cardDesc(item) {
+      if (lang === 'sl') {
+        if (item.description_sl) return `<div class="card-desc">${item.description_sl}</div>`;
+        return `<div class="card-desc-pending">Opis kmalu / Description coming soon</div>`;
+      }
+      return item.description ? `<div class="card-desc">${item.description}</div>` : '';
+    }
+    function tDifficulty(d) { return ((TRANSLATIONS[lang] || TRANSLATIONS.en).difficulty || {})[d] || d; }
+    function tActivityType(a) { return ((TRANSLATIONS[lang] || TRANSLATIONS.en).activityType || {})[a] || a; }
 
     function applyTranslations() {
       const T = TRANSLATIONS[lang];
-      // Tabs
+      // Primary nav buttons
+      const catKeys = { hiking:'catHiking', climbing:'catClimbing', trail_running:'catTrailRunning', cycling:'catCycling' };
+      document.querySelectorAll('.primary-nav-btn[data-cat]').forEach(btn => {
+        const key = catKeys[btn.dataset.cat];
+        if (key && T[key]) btn.textContent = T[key];
+      });
+      // Sub-tabs
       document.querySelectorAll('.tab[data-tab]').forEach(btn => {
         const k = btn.dataset.tab;
         if (T.tabs[k]) btn.textContent = T.tabs[k];
@@ -304,7 +349,7 @@
             <span class="status-${c.status}">${c.status}</span>
           </div>
           <div class="card-desc">${c.notes || 'No details provided.'}</div>
-          <div class="report-meta">Reported by ${c.username} · ${new Date(c.reported_at).toLocaleDateString()}</div>
+          <div class="report-meta">Reported by ${c.username || 'Admin'} · ${new Date(c.reported_at).toLocaleDateString()}</div>
         </div>
       `).join('');
     }
@@ -367,9 +412,9 @@
       renderTrails(allTrails);
     }
 
-    function renderAreaGrouped(summits, gridId, idPrefix) {
+    function renderAreaGrouped(summits, gridId, idPrefix, emptyMsg) {
       const grid = document.getElementById(gridId);
-      if (summits.length === 0) { grid.innerHTML = '<div class="empty">No summits found</div>'; return; }
+      if (summits.length === 0) { grid.innerHTML = `<div class="empty">${emptyMsg || t('noSummitsFound')}</div>`; return; }
       const groups = {};
       for (const s of summits) {
         const area = s.area_name || 'Other';
@@ -424,7 +469,7 @@
       document.getElementById('hills-stats').innerHTML = `
         <div class="stat"><strong>${hills.length}</strong> total</div>
       `;
-      renderAreaGrouped(hills, 'hills-grid', 'h');
+      renderAreaGrouped(hills, 'hills-grid', 'h', t('noHillsFound'));
     }
 
     function renderClimbing(routes, title) {
@@ -434,16 +479,16 @@
       `;
       if (title) document.querySelector('#climbing-view .section-title').textContent = title;
       const grid = document.getElementById('climbing-grid');
-      if (routes.length === 0) { grid.innerHTML = '<div class="empty">No routes found</div>'; return; }
+      if (routes.length === 0) { grid.innerHTML = `<div class="empty">${t('noRoutesFound')}</div>`; return; }
       grid.innerHTML = routes.map(r => `
         <div class="card" onclick="openDetail('climbing', '${r.id}')">
           <div class="card-header">
-            <div class="card-title">${r.name}</div>
-            <span class="badge badge-sport">${r.type}</span>
+            <div class="card-title">${lang === 'sl' && r.name_sl ? r.name_sl : r.name}</div>
+            <span class="badge badge-sport">${tActivityType(r.type)}</span>
           </div>
 <div class="grade">${r.grade_french || r.grade_alpine || ''} <span>${r.grade_uiaa ? '/ ' + r.grade_uiaa : ''}</span></div>
-          <div class="card-meta">${r.length_m ? r.length_m + 'm' : ''} ${r.num_bolts ? '· ' + r.num_bolts + ' bolts' : ''}</div>
-          <div class="card-desc">${desc(r)}</div>
+          <div class="card-meta">${r.length_m ? r.length_m + 'm' : ''} ${r.num_bolts ? '· ' + r.num_bolts + ' ' + t('bolts') : ''}</div>
+          ${cardDesc(r)}
         </div>
       `).join('');
     }
@@ -456,19 +501,19 @@
       `;
       if (title) document.querySelector('#trails-view .section-title').textContent = title;
       const grid = document.getElementById('trails-grid');
-      if (trails.length === 0) { grid.innerHTML = '<div class="empty">No trails found</div>'; return; }
+      if (trails.length === 0) { grid.innerHTML = `<div class="empty">${t('noTrailsFound')}</div>`; return; }
       grid.innerHTML = trails.map(t => `
         <div class="card" onclick="openDetail('trail', '${t.id}')">
           <div class="card-header">
-            <div class="card-title">${t.name}</div>
-            <span class="badge badge-${t.activity_type}">${t.activity_type}</span>
+            <div class="card-title">${lang === 'sl' && t.name_sl ? t.name_sl : t.name}</div>
+            <span class="badge badge-${t.activity_type}">${tActivityType(t.activity_type)}</span>
           </div>
-          <div class="card-meta difficulty-${t.difficulty}">${t.difficulty}</div>
+          <div class="card-meta difficulty-${t.difficulty}">${tDifficulty(t.difficulty)}</div>
           <div class="trail-stats">
             <span class="trail-stat">${t.distance_km}km</span>
             <span class="trail-stat">+${t.elevation_gain_m}m</span>
           </div>
-          <div class="card-desc">${desc(t)}</div>
+          ${cardDesc(t)}
         </div>
       `).join('');
     }
@@ -477,15 +522,17 @@
       const routes = allClimbing.filter(r => r.summit_id === id);
       const trails = allTrails.filter(t => t.summit_id === id);
       if (routes.length > 0) {
-        showTab('climbing', document.querySelector('.tab[data-tab="climbing"]'));
+        showCategory('climbing');
         renderClimbing(routes, `${t('sectionClimbing')} — ${name}`);
       } else if (trails.length > 0) {
-        showTab('trails', document.querySelector('.tab[data-tab="trails"]'));
+        showCategory('hiking');
+        showTab('trails', document.querySelector('#sub-tabs .tab[data-tab="trails"]'));
         renderTrails(trails, `${t('sectionTrails')} — ${name}`);
       }
     }
 
     function handleSearch() {
+      if (!currentTab) return;
       const q = document.getElementById('search').value.toLowerCase();
       const matchSummit = s => s.name.toLowerCase().includes(q) || (s.description || '').toLowerCase().includes(q);
       if (currentTab === 'summits') renderSummits(allSummits.filter(matchSummit));
@@ -496,19 +543,40 @@
 
     function showTab(tab, btn) {
       currentTab = tab;
+      if (['summits', 'hills', 'trails', 'conditions'].includes(tab)) currentHikingTab = tab;
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      btn.classList.add('active');
+      if (btn) btn.classList.add('active');
       document.getElementById('summits-view').style.display    = tab === 'summits'    ? 'block' : 'none';
       document.getElementById('hills-view').style.display      = tab === 'hills'      ? 'block' : 'none';
       document.getElementById('climbing-view').style.display   = tab === 'climbing'   ? 'block' : 'none';
       document.getElementById('trails-view').style.display     = tab === 'trails'     ? 'block' : 'none';
       document.getElementById('conditions-view').style.display = tab === 'conditions' ? 'block' : 'none';
+      document.getElementById('coming-soon-view').style.display = 'none';
       if (tab === 'conditions') { loadConditions(); document.getElementById('report-btn').style.display = 'block'; }
       document.getElementById('search').value = '';
       if (tab === 'summits')  renderSummits(allSummits);
       if (tab === 'hills')    renderHills(allHills);
       if (tab === 'climbing') renderClimbing(allClimbing, t('sectionClimbing'));
       if (tab === 'trails')   renderTrails(allTrails, t('sectionTrails'));
+    }
+
+    function showCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.primary-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+      const subTabs = document.getElementById('sub-tabs');
+      if (cat === 'hiking') {
+        subTabs.style.display = 'flex';
+        showTab(currentHikingTab, document.querySelector(`#sub-tabs .tab[data-tab="${currentHikingTab}"]`));
+      } else if (cat === 'climbing') {
+        subTabs.style.display = 'none';
+        showTab('climbing', null);
+      } else {
+        subTabs.style.display = 'none';
+        ['summits', 'hills', 'climbing', 'trails', 'conditions'].forEach(v =>
+          document.getElementById(v + '-view').style.display = 'none');
+        document.getElementById('coming-soon-view').style.display = 'block';
+        currentTab = null;
+      }
     }
 
     let currentUser = null;
@@ -588,6 +656,7 @@
     }
     loadAll();
     applyTranslations();
+    showCategory('hiking');
 
     // ── Summit area expand/collapse ───────────────────────────────
 
@@ -665,19 +734,19 @@
       const metaHtml = isClimbing ? `
         <div class="detail-meta-row">
           ${item.length_m   ? `<div class="detail-meta-item"><span class="val">${item.length_m}m</span>Length</div>` : ''}
-          ${item.num_bolts  ? `<div class="detail-meta-item"><span class="val">${item.num_bolts}</span>Bolts</div>` : ''}
+          ${item.num_bolts  ? `<div class="detail-meta-item"><span class="val">${item.num_bolts}</span>${t('bolts')}</div>` : ''}
           ${item.rock_type  ? `<div class="detail-meta-item"><span class="val">${item.rock_type}</span>Rock</div>` : ''}
-          <div class="detail-meta-item"><span class="val">${item.type}</span>Type</div>
+          <div class="detail-meta-item"><span class="val">${tActivityType(item.type)}</span>Type</div>
         </div>` : `
         <div class="detail-meta-row">
-          <div class="detail-meta-item difficulty-${item.difficulty}"><span class="val">${item.difficulty}</span>Difficulty</div>
+          <div class="detail-meta-item difficulty-${item.difficulty}"><span class="val">${tDifficulty(item.difficulty)}</span>Difficulty</div>
           ${item.distance_km      ? `<div class="detail-meta-item"><span class="val">${item.distance_km}km</span>Distance</div>` : ''}
           ${item.elevation_gain_m ? `<div class="detail-meta-item"><span class="val">+${item.elevation_gain_m}m</span>Elevation</div>` : ''}
-          <div class="detail-meta-item"><span class="val">${item.activity_type}</span>Activity</div>
+          <div class="detail-meta-item"><span class="val">${tActivityType(item.activity_type)}</span>Activity</div>
         </div>`;
 
       const badgeClass = isClimbing ? 'badge-sport' : `badge-${item.activity_type}`;
-      const badgeText  = isClimbing ? item.type : item.activity_type;
+      const badgeText  = isClimbing ? tActivityType(item.type) : tActivityType(item.activity_type);
 
       const conditionsHtml = conditions.length === 0
         ? '<div style="color:#555;font-size:13px">No conditions reports yet.</div>'
@@ -727,7 +796,7 @@
 
       document.getElementById('detail-content').innerHTML = `
         <div class="card-header" style="margin-bottom:6px">
-          <div class="detail-name">${item.name}</div>
+          <div class="detail-name">${lang === 'sl' && item.name_sl ? item.name_sl : item.name}</div>
           <span class="badge ${badgeClass}">${badgeText}</span>
         </div>
         ${gradesHtml}

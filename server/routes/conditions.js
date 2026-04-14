@@ -60,7 +60,7 @@ router.get('/recent', async (req, res) => {
         t.name as trail_name,
         cr.name as route_name
        FROM conditions_reports c
-       JOIN users u ON c.user_id = u.id
+       LEFT JOIN users u ON c.user_id = u.id
        LEFT JOIN trails t ON c.trail_id = t.id
        LEFT JOIN climbing_routes cr ON c.climbing_route_id = cr.id
        ORDER BY c.reported_at DESC
