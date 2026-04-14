@@ -11,9 +11,10 @@ router.get('/', async (req, res) => {
     const type = req.query.type;
     let rows;
 
+    const latLng = ', ST_Y(s.location::geometry) AS lat, ST_X(s.location::geometry) AS lng';
     if (type === 'hills') {
       const result = await pool.query(
-        'SELECT s.*, a.name AS area_name' +
+        'SELECT s.*, a.name AS area_name' + latLng +
         ' FROM summits s' +
         ' LEFT JOIN areas a ON s.area_id = a.id' +
         " WHERE s.type = 'peak' AND s.elevation_m < 1800" +
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
       rows = result.rows;
     } else if (type === 'summits') {
       const result = await pool.query(
-        'SELECT s.*, a.name AS area_name' +
+        'SELECT s.*, a.name AS area_name' + latLng +
         ' FROM summits s' +
         ' LEFT JOIN areas a ON s.area_id = a.id' +
         " WHERE (s.type = 'peak' AND s.elevation_m >= 1800) OR s.type = 'crag'" +
@@ -31,7 +32,7 @@ router.get('/', async (req, res) => {
       rows = result.rows;
     } else {
       const result = await pool.query(
-        'SELECT s.*, a.name AS area_name' +
+        'SELECT s.*, a.name AS area_name' + latLng +
         ' FROM summits s' +
         ' LEFT JOIN areas a ON s.area_id = a.id' +
         ' ORDER BY s.elevation_m DESC'
