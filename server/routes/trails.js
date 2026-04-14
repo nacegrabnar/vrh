@@ -48,12 +48,12 @@ router.get('/:id', async (req, res) => {
 // POST create a new trail
 router.post('/', async (req, res) => {
   try {
-    const { summit_id, name, difficulty, distance_km, elevation_gain_m, activity_type, description } = req.body;
+    const { summit_id, name, difficulty, distance_km, elevation_gain_m, activity_type, description, description_sl } = req.body;
     const result = await pool.query(
-      `INSERT INTO trails (summit_id, name, difficulty, distance_km, elevation_gain_m, activity_type, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO trails (summit_id, name, difficulty, distance_km, elevation_gain_m, activity_type, description, description_sl)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [summit_id, name, difficulty, distance_km, elevation_gain_m, activity_type, description]
+      [summit_id, name, difficulty, distance_km, elevation_gain_m, activity_type, description, description_sl || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

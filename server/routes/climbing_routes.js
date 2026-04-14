@@ -48,13 +48,13 @@ router.get('/:id', async (req, res) => {
 // POST create a new climbing route
 router.post('/', async (req, res) => {
   try {
-    const { summit_id, name, grade_french, grade_uiaa, grade_alpine, type, length_m, num_bolts, rock_type, description } = req.body;
+    const { summit_id, name, grade_french, grade_uiaa, grade_alpine, type, length_m, num_bolts, rock_type, description, description_sl } = req.body;
     const result = await pool.query(
-      `INSERT INTO climbing_routes 
-        (summit_id, name, grade_french, grade_uiaa, grade_alpine, type, length_m, num_bolts, rock_type, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO climbing_routes
+        (summit_id, name, grade_french, grade_uiaa, grade_alpine, type, length_m, num_bolts, rock_type, description, description_sl)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
-      [summit_id, name, grade_french, grade_uiaa, grade_alpine, type, length_m, num_bolts, rock_type, description]
+      [summit_id, name, grade_french, grade_uiaa, grade_alpine, type, length_m, num_bolts, rock_type, description, description_sl || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

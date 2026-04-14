@@ -31,6 +31,7 @@ CREATE TABLE summits (
   elevation_m FLOAT NOT NULL,
   location GEOGRAPHY(POINT, 4326),
   description TEXT,
+  description_sl TEXT,
   type VARCHAR(50) DEFAULT 'peak',
   created_at TIMESTAMP DEFAULT NOW()
 );
@@ -45,6 +46,7 @@ CREATE TABLE trails (
   activity_type VARCHAR(50) DEFAULT 'hiking',
   path GEOGRAPHY(LINESTRING, 4326),
   description TEXT,
+  description_sl TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -60,6 +62,7 @@ CREATE TABLE climbing_routes (
   num_bolts INTEGER,
   rock_type VARCHAR(100),
   description TEXT,
+  description_sl TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 

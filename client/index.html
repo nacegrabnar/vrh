@@ -58,6 +58,46 @@
     .status-poor { color: #f87171; }
     .status-closed { color: #f87171; font-weight:600; }
     .report-meta { font-size: 12px; color: #666; margin-top: 8px; }
+    .area-section { margin-bottom: 36px; }
+    .area-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; font-size: 15px; font-weight: 600; color: #ccc; }
+    .area-header::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, #2a2d36, transparent); }
+    .area-overflow { overflow: hidden; transition: height 0.35s ease; }
+    .show-more-btn { margin-top: 14px; width: 100%; padding: 9px 0; background: none; border: 1px solid #2a2d36; border-radius: 8px; color: #666; font-size: 13px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+    .show-more-btn:hover { border-color: #444; color: #ccc; }
+
+    /* Detail overlay */
+    .detail-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:200; overflow-y:auto; }
+    .detail-panel { max-width:700px; margin:40px auto 60px; background:#1a1d26; border:1px solid #2a2d36; border-radius:16px; padding:36px; position:relative; }
+    .detail-close { position:absolute; top:14px; right:18px; background:none; border:none; color:#555; font-size:26px; cursor:pointer; line-height:1; padding:4px 8px; }
+    .detail-close:hover { color:#fff; }
+    .detail-name { font-size:26px; font-weight:700; }
+    .detail-section { margin-top:28px; }
+    .detail-section-title { font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #222; padding-bottom:8px; margin-bottom:14px; }
+    .detail-grades { display:flex; gap:12px; margin:14px 0; flex-wrap:wrap; }
+    .detail-grade-block { background:#222; border-radius:8px; padding:10px 18px; text-align:center; min-width:72px; }
+    .detail-grade-label { font-size:10px; color:#555; text-transform:uppercase; letter-spacing:0.5px; }
+    .detail-grade-value { font-size:22px; font-weight:700; color:#f59e0b; display:block; margin-top:3px; }
+    .detail-meta-row { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0; }
+    .detail-meta-item { font-size:12px; color:#666; background:#222; padding:8px 12px; border-radius:6px; }
+    .detail-meta-item .val { color:#fff; display:block; font-size:15px; font-weight:600; margin-bottom:1px; }
+    .detail-desc { font-size:14px; color:#aaa; line-height:1.7; margin-top:12px; }
+    .conditions-list { display:flex; flex-direction:column; gap:10px; }
+    .condition-item { background:#222; border-radius:8px; padding:12px 16px; }
+    .condition-item .cond-status { font-weight:600; font-size:13px; }
+    .condition-item .cond-notes { font-size:13px; color:#999; margin-top:5px; }
+    .condition-item .cond-meta { font-size:11px; color:#555; margin-top:6px; }
+    .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:4px; }
+    .photo-item { border-radius:8px; overflow:hidden; background:#222; }
+    .photo-item img { width:100%; aspect-ratio:1; object-fit:cover; display:block; }
+    .photo-caption { font-size:11px; color:#666; padding:4px 6px; }
+    .upload-area { border:2px dashed #333; border-radius:8px; padding:20px; text-align:center; cursor:pointer; transition:border-color 0.2s; margin-top:4px; }
+    .upload-area:hover { border-color:#555; }
+    .upload-area input[type=file] { display:none; }
+    .detail-inline-form { background:#222; border-radius:8px; padding:16px; margin-top:12px; }
+    .lang-toggle { display:flex; align-items:center; border:1px solid #2a2d36; border-radius:8px; padding:2px; gap:2px; }
+    .lang-btn { padding:5px 11px; border-radius:6px; border:none; background:none; color:#555; cursor:pointer; font-size:12px; font-weight:700; letter-spacing:0.5px; transition:all 0.2s; }
+    .lang-btn:hover { color:#ccc; }
+    .lang-btn-active { background:#fff; color:#000; }
   </style>
 </head>
 <body>
@@ -68,14 +108,18 @@
       <span class="subtitle">Slovenia Outdoor</span>
     </div>
     <div style="display:flex;gap:12px;align-items:center">
-      <input class="search-bar" type="text" id="search" placeholder="Search summits, routes, trails..." oninput="handleSearch()">
-      <div id="auth-buttons">
-        <button class="auth-btn" onclick="showModal('login')">Log in</button>
-        <button class="auth-btn primary" onclick="showModal('register')">Sign up</button>
+      <input class="search-bar" type="text" id="search" data-i18n="searchPlaceholder" placeholder="Search summits, routes, trails..." oninput="handleSearch()">
+      <div class="lang-toggle">
+        <button id="btn-lang-en" class="lang-btn lang-btn-active" onclick="setLang('en')">EN</button>
+        <button id="btn-lang-sl" class="lang-btn" onclick="setLang('sl')">SL</button>
+      </div>
+      <div id="auth-buttons" style="display:flex;gap:8px">
+        <button class="auth-btn" data-i18n="login" onclick="showModal('login')">Log in</button>
+        <button class="auth-btn primary" data-i18n="signup" onclick="showModal('register')">Sign up</button>
       </div>
       <div id="user-menu" style="display:none">
         <span id="username-display" style="font-size:14px;color:#aaa"></span>
-        <button class="auth-btn" onclick="logout()" style="margin-left:8px">Log out</button>
+        <button class="auth-btn" data-i18n="logout" onclick="logout()" style="margin-left:8px">Log out</button>
       </div>
     </div>
   </header>
@@ -95,34 +139,48 @@
     </div>
   </div>
 
+  <!-- Detail overlay -->
+  <div id="detail-overlay" class="detail-overlay" onclick="handleDetailOverlayClick(event)">
+    <div class="detail-panel">
+      <button class="detail-close" onclick="closeDetail()">&#x2715;</button>
+      <div id="detail-content"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
   <div class="tabs">
-    <button class="tab active" onclick="showTab('summits', this)">Summits</button>
-    <button class="tab" onclick="showTab('climbing', this)">Climbing Routes</button>
-    <button class="tab" onclick="showTab('trails', this)">Trails</button>
-    <button class="tab" onclick="showTab('conditions', this)">Conditions</button>
+    <button class="tab active" data-tab="summits"    onclick="showTab('summits', this)">Summits</button>
+    <button class="tab"        data-tab="hills"      onclick="showTab('hills', this)">Hills</button>
+    <button class="tab"        data-tab="climbing"   onclick="showTab('climbing', this)">Climbing Routes</button>
+    <button class="tab"        data-tab="trails"     onclick="showTab('trails', this)">Trails</button>
+    <button class="tab"        data-tab="conditions" onclick="showTab('conditions', this)">Conditions</button>
   </div>
 
   <div class="container">
     <div id="summits-view">
       <div class="stats" id="summit-stats"></div>
-      <p class="section-title">All summits</p>
-      <div class="grid" id="summits-grid"><div class="loading">Loading summits...</div></div>
+      <p class="section-title" data-i18n="sectionSummits">Summits &amp; crags</p>
+      <div id="summits-grid"><div class="loading">Loading summits...</div></div>
+    </div>
+    <div id="hills-view" style="display:none">
+      <div class="stats" id="hills-stats"></div>
+      <p class="section-title" data-i18n="sectionHills">Hills &amp; lower peaks</p>
+      <div id="hills-grid"><div class="loading">Loading hills...</div></div>
     </div>
     <div id="climbing-view" style="display:none">
       <div class="stats" id="climbing-stats"></div>
-      <p class="section-title">Climbing routes</p>
+      <p class="section-title" data-i18n="sectionClimbing">Climbing routes</p>
       <div class="grid" id="climbing-grid"><div class="loading">Loading routes...</div></div>
     </div>
     <div id="trails-view" style="display:none">
       <div class="stats" id="trail-stats"></div>
-      <p class="section-title">Hiking & running trails</p>
+      <p class="section-title" data-i18n="sectionTrails">Hiking &amp; running trails</p>
       <div class="grid" id="trails-grid"><div class="loading">Loading trails...</div></div>
     </div>
     <div id="conditions-view" style="display:none">
       <div class="stats" id="conditions-stats"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <p class="section-title">Recent conditions reports</p>
-        <button class="auth-btn primary" onclick="showConditionsForm()" id="report-btn">+ Add report</button>
+        <p class="section-title" data-i18n="sectionConditions">Recent conditions reports</p>
+        <button class="auth-btn primary" data-i18n="addReport" onclick="showConditionsForm()" id="report-btn">+ Add report</button>
       </div>
       <div id="conditions-form" style="display:none;background:#1a1d26;border:1px solid #333;border-radius:12px;padding:20px;margin-bottom:20px;">
         <h3 style="margin-bottom:16px;font-size:16px">New conditions report</h3>
@@ -147,8 +205,86 @@
 
   <script>
     const API = '';
-    let allSummits = [], allClimbing = [], allTrails = [];
+    let allSummits = [], allHills = [], allClimbing = [], allTrails = [];
     let currentTab = 'summits';
+
+    // ── i18n ──────────────────────────────────────────────────────
+    const TRANSLATIONS = {
+      en: {
+        tabs: { summits:'Summits', hills:'Hills', climbing:'Climbing Routes', trails:'Trails', conditions:'Conditions' },
+        sectionSummits:'Summits & crags', sectionHills:'Hills & lower peaks',
+        sectionClimbing:'Climbing routes', sectionTrails:'Hiking & running trails',
+        sectionConditions:'Recent conditions reports',
+        searchPlaceholder:'Search summits, routes, trails...',
+        login:'Log in', signup:'Sign up', logout:'Log out',
+        addReport:'+ Add report', showLess:'Show less',
+        noConditions:'No conditions reports yet — be the first!',
+        statusGood:'Good conditions', statusFair:'Fair conditions',
+        statusPoor:'Poor conditions', statusClosed:'Closed / dangerous',
+        loginTitle:'Log in', registerTitle:'Create account'
+      },
+      sl: {
+        tabs: { summits:'Vrhovi', hills:'Hribi', climbing:'Plezalne smeri', trails:'Poti', conditions:'Razmere' },
+        sectionSummits:'Vsi vrhovi', sectionHills:'Hribi in nižji vrhovi',
+        sectionClimbing:'Plezalne smeri', sectionTrails:'Pohodniške in tekaške poti',
+        sectionConditions:'Zadnja poročila o razmerah',
+        searchPlaceholder:'Išči vrhove, smeri, poti...',
+        login:'Prijava', signup:'Registracija', logout:'Odjava',
+        addReport:'+ Dodaj poročilo', showLess:'Pokaži manj',
+        noConditions:'Še ni poročil — bodi prvi!',
+        statusGood:'Dobre razmere', statusFair:'Srednje razmere',
+        statusPoor:'Slabe razmere', statusClosed:'Zaprto / nevarno',
+        loginTitle:'Prijava', registerTitle:'Ustvari račun'
+      }
+    };
+    let lang = localStorage.getItem('vrh_lang') || 'en';
+    function t(key) { return (TRANSLATIONS[lang] || TRANSLATIONS.en)[key] || key; }
+    function tShowMore(n) {
+      return lang === 'sl' ? `Pokaži več (${n} preostalih)` : `Show more (${n} remaining)`;
+    }
+    function desc(item) {
+      return (lang === 'sl' && item.description_sl) ? item.description_sl : (item.description || '');
+    }
+
+    function applyTranslations() {
+      const T = TRANSLATIONS[lang];
+      // Tabs
+      document.querySelectorAll('.tab[data-tab]').forEach(btn => {
+        const k = btn.dataset.tab;
+        if (T.tabs[k]) btn.textContent = T.tabs[k];
+      });
+      // All data-i18n elements
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const val = T[el.dataset.i18n];
+        if (!val) return;
+        if (el.tagName === 'INPUT') el.placeholder = val;
+        else el.textContent = val;
+      });
+      // Status dropdowns
+      const sel = document.getElementById('report-status');
+      if (sel) {
+        const cur = sel.value;
+        sel.innerHTML = [
+          ['good', T.statusGood], ['fair', T.statusFair],
+          ['poor', T.statusPoor], ['closed', T.statusClosed]
+        ].map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+        sel.value = cur;
+      }
+      // Lang toggle
+      document.getElementById('btn-lang-en').classList.toggle('lang-btn-active', lang === 'en');
+      document.getElementById('btn-lang-sl').classList.toggle('lang-btn-active', lang === 'sl');
+    }
+
+    function setLang(newLang) {
+      lang = newLang;
+      localStorage.setItem('vrh_lang', newLang);
+      applyTranslations();
+      if (currentTab === 'summits')   renderSummits(allSummits);
+      else if (currentTab === 'hills')      renderHills(allHills);
+      else if (currentTab === 'climbing')   renderClimbing(allClimbing, t('sectionClimbing'));
+      else if (currentTab === 'trails')     renderTrails(allTrails, t('sectionTrails'));
+      else if (currentTab === 'conditions') loadConditions();
+    }
 
     async function loadConditions() {
       const res = await fetch('/conditions/recent');
@@ -158,7 +294,7 @@
       `;
       const grid = document.getElementById('conditions-grid');
       if (conditions.length === 0) {
-        grid.innerHTML = '<div class="empty">No conditions reports yet — be the first!</div>';
+        grid.innerHTML = `<div class="empty">${t('noConditions')}</div>`;
         return;
       }
       grid.innerHTML = conditions.map(c => `
@@ -215,17 +351,62 @@
       }
     }
     async function loadAll() {
-      const [summitsRes, climbingRes, trailsRes] = await Promise.all([
-        fetch(`${API}/summits`),
+      const [summitsRes, hillsRes, climbingRes, trailsRes] = await Promise.all([
+        fetch(`${API}/summits?type=summits`),
+        fetch(`${API}/summits?type=hills`),
         fetch(`${API}/climbing-routes`),
         fetch(`${API}/trails`)
       ]);
       allSummits = await summitsRes.json();
+      allHills   = await hillsRes.json();
       allClimbing = await climbingRes.json();
       allTrails = await trailsRes.json();
       renderSummits(allSummits);
+      renderHills(allHills);
       renderClimbing(allClimbing);
       renderTrails(allTrails);
+    }
+
+    function renderAreaGrouped(summits, gridId, idPrefix) {
+      const grid = document.getElementById(gridId);
+      if (summits.length === 0) { grid.innerHTML = '<div class="empty">No summits found</div>'; return; }
+      const groups = {};
+      for (const s of summits) {
+        const area = s.area_name || 'Other';
+        if (!groups[area]) groups[area] = [];
+        groups[area].push(s);
+      }
+      const LIMIT = 6;
+      const card = s => {
+        const displayName = lang === 'sl' && s.name_sl ? s.name_sl : s.name;
+        return `
+        <div class="card" onclick="filterBySummit('${s.id}', '${s.name}')">
+          <div class="card-header">
+            <div class="card-title">${displayName}</div>
+            <span class="badge badge-${s.type}">${s.type}</span>
+          </div>
+          <div class="card-meta">${s.elevation_m}m elevation</div>
+          <div class="card-desc">${desc(s)}</div>
+        </div>`;
+      };
+      grid.innerHTML = Object.entries(groups).map(([area, items]) => {
+        const areaId = idPrefix + '-' + area.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const visible = items.slice(0, LIMIT);
+        const hidden  = items.slice(LIMIT);
+        return `
+          <div class="area-section">
+            <div class="area-header">${area}</div>
+            <div class="grid">${visible.map(card).join('')}</div>
+            ${hidden.length ? `
+              <div class="area-overflow" id="overflow-${areaId}" style="height:0" data-expanded="0">
+                <div class="grid" style="margin-top:14px">${hidden.map(card).join('')}</div>
+              </div>
+              <button class="show-more-btn" id="btn-${areaId}"
+                onclick="toggleAreaOverflow('${areaId}', ${hidden.length})">
+                ${tShowMore(hidden.length)}
+              </button>` : ''}
+          </div>`;
+      }).join('');
     }
 
     function renderSummits(summits) {
@@ -236,18 +417,14 @@
         <div class="stat"><strong>${peaks}</strong> peaks</div>
         <div class="stat"><strong>${crags}</strong> crags</div>
       `;
-      const grid = document.getElementById('summits-grid');
-      if (summits.length === 0) { grid.innerHTML = '<div class="empty">No summits found</div>'; return; }
-      grid.innerHTML = summits.map(s => `
-        <div class="card" onclick="filterBySummit('${s.id}', '${s.name}')">
-          <div class="card-header">
-            <div class="card-title">${s.name}</div>
-            <span class="badge badge-${s.type}">${s.type}</span>
-          </div>
-          <div class="card-meta">${s.elevation_m}m elevation</div>
-          <div class="card-desc">${s.description}</div>
-        </div>
-      `).join('');
+      renderAreaGrouped(summits, 'summits-grid', 's');
+    }
+
+    function renderHills(hills) {
+      document.getElementById('hills-stats').innerHTML = `
+        <div class="stat"><strong>${hills.length}</strong> total</div>
+      `;
+      renderAreaGrouped(hills, 'hills-grid', 'h');
     }
 
     function renderClimbing(routes, title) {
@@ -259,14 +436,14 @@
       const grid = document.getElementById('climbing-grid');
       if (routes.length === 0) { grid.innerHTML = '<div class="empty">No routes found</div>'; return; }
       grid.innerHTML = routes.map(r => `
-        <div class="card">
+        <div class="card" onclick="openDetail('climbing', '${r.id}')">
           <div class="card-header">
             <div class="card-title">${r.name}</div>
             <span class="badge badge-sport">${r.type}</span>
           </div>
 <div class="grade">${r.grade_french || r.grade_alpine || ''} <span>${r.grade_uiaa ? '/ ' + r.grade_uiaa : ''}</span></div>
           <div class="card-meta">${r.length_m ? r.length_m + 'm' : ''} ${r.num_bolts ? '· ' + r.num_bolts + ' bolts' : ''}</div>
-          <div class="card-desc">${r.description}</div>
+          <div class="card-desc">${desc(r)}</div>
         </div>
       `).join('');
     }
@@ -281,7 +458,7 @@
       const grid = document.getElementById('trails-grid');
       if (trails.length === 0) { grid.innerHTML = '<div class="empty">No trails found</div>'; return; }
       grid.innerHTML = trails.map(t => `
-        <div class="card">
+        <div class="card" onclick="openDetail('trail', '${t.id}')">
           <div class="card-header">
             <div class="card-title">${t.name}</div>
             <span class="badge badge-${t.activity_type}">${t.activity_type}</span>
@@ -291,7 +468,7 @@
             <span class="trail-stat">${t.distance_km}km</span>
             <span class="trail-stat">+${t.elevation_gain_m}m</span>
           </div>
-          <div class="card-desc">${t.description}</div>
+          <div class="card-desc">${desc(t)}</div>
         </div>
       `).join('');
     }
@@ -300,17 +477,19 @@
       const routes = allClimbing.filter(r => r.summit_id === id);
       const trails = allTrails.filter(t => t.summit_id === id);
       if (routes.length > 0) {
-        showTab('climbing', document.querySelectorAll('.tab')[1]);
-        renderClimbing(routes, `Climbing routes — ${name}`);
+        showTab('climbing', document.querySelector('.tab[data-tab="climbing"]'));
+        renderClimbing(routes, `${t('sectionClimbing')} — ${name}`);
       } else if (trails.length > 0) {
-        showTab('trails', document.querySelectorAll('.tab')[2]);
-        renderTrails(trails, `Trails — ${name}`);
+        showTab('trails', document.querySelector('.tab[data-tab="trails"]'));
+        renderTrails(trails, `${t('sectionTrails')} — ${name}`);
       }
     }
 
     function handleSearch() {
       const q = document.getElementById('search').value.toLowerCase();
-      if (currentTab === 'summits') renderSummits(allSummits.filter(s => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)));
+      const matchSummit = s => s.name.toLowerCase().includes(q) || (s.description || '').toLowerCase().includes(q);
+      if (currentTab === 'summits') renderSummits(allSummits.filter(matchSummit));
+      if (currentTab === 'hills')   renderHills(allHills.filter(matchSummit));
       if (currentTab === 'climbing') renderClimbing(allClimbing.filter(r => r.name.toLowerCase().includes(q) || r.grade_french.toLowerCase().includes(q)));
       if (currentTab === 'trails') renderTrails(allTrails.filter(t => t.name.toLowerCase().includes(q)));
     }
@@ -319,15 +498,17 @@
       currentTab = tab;
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('summits-view').style.display = tab === 'summits' ? 'block' : 'none';
-      document.getElementById('climbing-view').style.display = tab === 'climbing' ? 'block' : 'none';
-      document.getElementById('trails-view').style.display = tab === 'trails' ? 'block' : 'none';
+      document.getElementById('summits-view').style.display    = tab === 'summits'    ? 'block' : 'none';
+      document.getElementById('hills-view').style.display      = tab === 'hills'      ? 'block' : 'none';
+      document.getElementById('climbing-view').style.display   = tab === 'climbing'   ? 'block' : 'none';
+      document.getElementById('trails-view').style.display     = tab === 'trails'     ? 'block' : 'none';
       document.getElementById('conditions-view').style.display = tab === 'conditions' ? 'block' : 'none';
       if (tab === 'conditions') { loadConditions(); document.getElementById('report-btn').style.display = 'block'; }
       document.getElementById('search').value = '';
-      if (tab === 'summits') renderSummits(allSummits);
-      if (tab === 'climbing') renderClimbing(allClimbing, 'Climbing routes');
-      if (tab === 'trails') renderTrails(allTrails, 'Hiking & running trails');
+      if (tab === 'summits')  renderSummits(allSummits);
+      if (tab === 'hills')    renderHills(allHills);
+      if (tab === 'climbing') renderClimbing(allClimbing, t('sectionClimbing'));
+      if (tab === 'trails')   renderTrails(allTrails, t('sectionTrails'));
     }
 
     let currentUser = null;
@@ -335,7 +516,7 @@
 
     function showModal(mode) {
       authMode = mode;
-      document.getElementById('modal-title').textContent = mode === 'login' ? 'Log in' : 'Create account';
+      document.getElementById('modal-title').textContent = mode === 'login' ? t('loginTitle') : t('registerTitle');
       document.getElementById('register-fields').style.display = mode === 'register' ? 'block' : 'none';
       document.getElementById('modal-error').style.display = 'none';
       document.getElementById('modal-overlay').style.display = 'flex';
@@ -404,7 +585,207 @@
     if (savedUser) {
       currentUser = JSON.parse(savedUser);
       updateAuthUI();
-    }loadAll();
+    }
+    loadAll();
+    applyTranslations();
+
+    // ── Summit area expand/collapse ───────────────────────────────
+
+    function toggleAreaOverflow(areaId, hiddenCount) {
+      const panel = document.getElementById('overflow-' + areaId);
+      const btn   = document.getElementById('btn-' + areaId);
+      const expanded = panel.dataset.expanded === '1';
+
+      if (expanded) {
+        // Collapse: auto → px (reflow) → 0
+        panel.style.height = panel.scrollHeight + 'px';
+        panel.offsetHeight; // force reflow so transition fires
+        panel.style.height = '0';
+        panel.dataset.expanded = '0';
+        btn.textContent = tShowMore(hiddenCount);
+      } else {
+        // Expand: 0 → scrollHeight, then auto so resize works
+        panel.style.height = panel.scrollHeight + 'px';
+        panel.dataset.expanded = '1';
+        btn.textContent = t('showLess');
+        panel.addEventListener('transitionend', () => {
+          if (panel.dataset.expanded === '1') panel.style.height = 'auto';
+        }, { once: true });
+      }
+    }
+
+    // ── Detail panel ──────────────────────────────────────────────
+
+    let detailType = null;
+    let detailId = null;
+
+    function handleDetailOverlayClick(e) {
+      if (e.target === document.getElementById('detail-overlay')) closeDetail();
+    }
+
+    function closeDetail() {
+      document.getElementById('detail-overlay').style.display = 'none';
+      detailType = null;
+      detailId = null;
+    }
+
+    async function openDetail(type, id) {
+      detailType = type;
+      detailId = id;
+      const overlay = document.getElementById('detail-overlay');
+      overlay.style.display = 'block';
+      overlay.scrollTop = 0;
+      document.getElementById('detail-content').innerHTML = '<div class="loading">Loading...</div>';
+
+      const base = type === 'climbing' ? 'climbing-routes' : 'trails';
+      const condBase = type === 'climbing' ? 'climbing' : 'trail';
+      const [itemRes, condRes, photoRes] = await Promise.all([
+        fetch(`/${base}/${id}`),
+        fetch(`/conditions/${condBase}/${id}`),
+        fetch(`/photos/${condBase}/${id}`)
+      ]);
+
+      const item = await itemRes.json();
+      const conditions = condRes.ok ? await condRes.json() : [];
+      const photos = photoRes.ok ? await photoRes.json() : [];
+      renderDetailContent(type, item, conditions, photos);
+    }
+
+    function renderDetailContent(type, item, conditions, photos) {
+      const isClimbing = type === 'climbing';
+      const token = localStorage.getItem('vrh_token');
+
+      const gradesHtml = isClimbing ? `
+        <div class="detail-grades">
+          ${item.grade_french ? `<div class="detail-grade-block"><div class="detail-grade-label">French</div><span class="detail-grade-value">${item.grade_french}</span></div>` : ''}
+          ${item.grade_uiaa   ? `<div class="detail-grade-block"><div class="detail-grade-label">UIAA</div><span class="detail-grade-value">${item.grade_uiaa}</span></div>` : ''}
+          ${item.grade_alpine ? `<div class="detail-grade-block"><div class="detail-grade-label">Alpine</div><span class="detail-grade-value">${item.grade_alpine}</span></div>` : ''}
+        </div>` : '';
+
+      const metaHtml = isClimbing ? `
+        <div class="detail-meta-row">
+          ${item.length_m   ? `<div class="detail-meta-item"><span class="val">${item.length_m}m</span>Length</div>` : ''}
+          ${item.num_bolts  ? `<div class="detail-meta-item"><span class="val">${item.num_bolts}</span>Bolts</div>` : ''}
+          ${item.rock_type  ? `<div class="detail-meta-item"><span class="val">${item.rock_type}</span>Rock</div>` : ''}
+          <div class="detail-meta-item"><span class="val">${item.type}</span>Type</div>
+        </div>` : `
+        <div class="detail-meta-row">
+          <div class="detail-meta-item difficulty-${item.difficulty}"><span class="val">${item.difficulty}</span>Difficulty</div>
+          ${item.distance_km      ? `<div class="detail-meta-item"><span class="val">${item.distance_km}km</span>Distance</div>` : ''}
+          ${item.elevation_gain_m ? `<div class="detail-meta-item"><span class="val">+${item.elevation_gain_m}m</span>Elevation</div>` : ''}
+          <div class="detail-meta-item"><span class="val">${item.activity_type}</span>Activity</div>
+        </div>`;
+
+      const badgeClass = isClimbing ? 'badge-sport' : `badge-${item.activity_type}`;
+      const badgeText  = isClimbing ? item.type : item.activity_type;
+
+      const conditionsHtml = conditions.length === 0
+        ? '<div style="color:#555;font-size:13px">No conditions reports yet.</div>'
+        : `<div class="conditions-list">${conditions.map(c => `
+            <div class="condition-item">
+              <span class="cond-status status-${c.status}">${c.status}</span>
+              ${c.notes ? `<div class="cond-notes">${c.notes}</div>` : ''}
+              <div class="cond-meta">Reported by ${c.username} &middot; ${new Date(c.reported_at).toLocaleDateString()}</div>
+            </div>`).join('')}
+          </div>`;
+
+      const photosHtml = photos.length === 0
+        ? '<div style="color:#555;font-size:13px">No photos yet.</div>'
+        : `<div class="photos-grid">${photos.map(p => `
+            <div class="photo-item">
+              <img src="${p.url}" alt="${p.caption || ''}">
+              ${p.caption ? `<div class="photo-caption">${p.caption}</div>` : ''}
+            </div>`).join('')}
+          </div>`;
+
+      const condFormHtml = token ? `
+        <button class="auth-btn" onclick="document.getElementById('detail-cond-form').style.display='block';this.style.display='none'" style="margin-top:12px">+ Add report</button>
+        <div id="detail-cond-form" class="detail-inline-form" style="display:none">
+          <select class="form-input" id="detail-cond-status">
+            <option value="good">${t('statusGood')}</option>
+            <option value="fair">${t('statusFair')}</option>
+            <option value="poor">${t('statusPoor')}</option>
+            <option value="closed">${t('statusClosed')}</option>
+          </select>
+          <textarea class="form-input" id="detail-cond-notes" placeholder="Describe the conditions..." rows="2" style="resize:vertical"></textarea>
+          <button class="auth-btn primary" onclick="submitDetailConditions()">Submit</button>
+          <button class="auth-btn" onclick="document.getElementById('detail-cond-form').style.display='none'" style="margin-left:8px">Cancel</button>
+        </div>` : '<div style="color:#555;font-size:12px;margin-top:10px">Log in to add a conditions report.</div>';
+
+      const photoFormHtml = token ? `
+        <button class="auth-btn" onclick="document.getElementById('detail-photo-form').style.display='block';this.style.display='none'" style="margin-top:12px">+ Upload photo</button>
+        <div id="detail-photo-form" class="detail-inline-form" style="display:none">
+          <label class="upload-area" for="detail-photo-input">
+            <div style="color:#666;font-size:14px">Click to select a photo</div>
+            <div id="detail-photo-name" style="color:#888;font-size:12px;margin-top:4px"></div>
+            <input type="file" id="detail-photo-input" accept="image/*" onchange="handlePhotoSelect()">
+          </label>
+          <input class="form-input" type="text" id="detail-photo-caption" placeholder="Caption (optional)" style="margin-top:8px">
+          <button class="auth-btn primary" onclick="submitDetailPhoto()" style="margin-top:4px">Upload</button>
+          <button class="auth-btn" onclick="document.getElementById('detail-photo-form').style.display='none'" style="margin-left:8px">Cancel</button>
+        </div>` : '<div style="color:#555;font-size:12px;margin-top:10px">Log in to upload photos.</div>';
+
+      document.getElementById('detail-content').innerHTML = `
+        <div class="card-header" style="margin-bottom:6px">
+          <div class="detail-name">${item.name}</div>
+          <span class="badge ${badgeClass}">${badgeText}</span>
+        </div>
+        ${gradesHtml}
+        ${metaHtml}
+        ${desc(item) ? `<div class="detail-desc">${desc(item)}</div>` : ''}
+
+        <div class="detail-section">
+          <div class="detail-section-title">Conditions reports</div>
+          ${conditionsHtml}
+          ${condFormHtml}
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-title">Photos</div>
+          ${photosHtml}
+          ${photoFormHtml}
+        </div>`;
+    }
+
+    function handlePhotoSelect() {
+      const file = document.getElementById('detail-photo-input').files[0];
+      if (file) document.getElementById('detail-photo-name').textContent = file.name;
+    }
+
+    async function submitDetailConditions() {
+      const token = localStorage.getItem('vrh_token');
+      const body = {
+        status: document.getElementById('detail-cond-status').value,
+        notes: document.getElementById('detail-cond-notes').value,
+        trail_id: detailType === 'trail' ? detailId : null,
+        climbing_route_id: detailType === 'climbing' ? detailId : null
+      };
+      const res = await fetch('/conditions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      if (res.ok) openDetail(detailType, detailId);
+    }
+
+    async function submitDetailPhoto() {
+      const token = localStorage.getItem('vrh_token');
+      const file = document.getElementById('detail-photo-input').files[0];
+      if (!file) return;
+      const caption = document.getElementById('detail-photo-caption').value;
+      const formData = new FormData();
+      formData.append('photo', file);
+      if (caption) formData.append('caption', caption);
+      const endpoint = detailType === 'climbing'
+        ? `/photos/climbing/${detailId}`
+        : `/photos/trail/${detailId}`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      if (res.ok) openDetail(detailType, detailId);
+    }
   </script>
 </body>
 </html>

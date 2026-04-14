@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(mkdir -p c:/Users/User/vrh-app/client/uploads)",
+      "Bash(touch c:/Users/User/vrh-app/client/uploads/.gitkeep)",
+      "Bash(PGPASSWORD=Nacenace1. psql -h localhost -U postgres -d vrh_db -c \"ALTER TABLE summits ADD COLUMN IF NOT EXISTS description_sl TEXT;\" -c \"ALTER TABLE climbing_routes ADD COLUMN IF NOT EXISTS description_sl TEXT;\" -c \"ALTER TABLE trails ADD COLUMN IF NOT EXISTS description_sl TEXT;\")"
+    ]
+  }
+}
