@@ -67,12 +67,12 @@ router.get('/:id', async (req, res) => {
 // POST create a new summit
 router.post('/', async (req, res) => {
   try {
-    const { name, name_sl, area_id, elevation_m, description, description_sl, type } = req.body;
+    const { name, name_sl, area_id, elevation_m, description, description_sl, type, difficulty } = req.body;
     const result = await pool.query(
-      `INSERT INTO summits (name, name_sl, area_id, elevation_m, description, description_sl, type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO summits (name, name_sl, area_id, elevation_m, description, description_sl, type, difficulty)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [name, name_sl, area_id || null, elevation_m, description, description_sl || null, type]
+      [name, name_sl, area_id || null, elevation_m, description, description_sl || null, type, difficulty || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

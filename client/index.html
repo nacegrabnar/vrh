@@ -10,10 +10,9 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: system-ui, sans-serif; background: #0f1117; color: #fff; }
     header { padding: 20px 40px; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; }
-    .logo { display: flex; align-items: center; gap: 10px; }
-    .logo h1 { font-size: 22px; font-weight: 700; }
-    .logo span { font-size: 22px; }
-    .subtitle { font-size: 13px; color: #888; margin-left: 8px; }
+    .logo { display: flex; align-items: center; gap: 6px; }
+    .logo svg { display: block; flex-shrink: 0; }
+    .subtitle { font-size: 12px; color: #888; padding-left: 4px; border-left: 1px solid #333; margin-left: 4px; line-height: 1.3; }
     .search-bar { padding: 8px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1d26; color: #fff; font-size: 14px; width: 260px; outline: none; }
     .search-bar:focus { border-color: #555; }
     .tabs { display: flex; gap: 8px; padding: 20px 40px 0; }
@@ -34,6 +33,11 @@
     .badge-hiking { background: #2a2a1a; color: #facc15; }
     .badge-trail_running { background: #2a1a3a; color: #c084fc; }
     .badge-cycling { background: #1a3a3a; color: #34d399; }
+    .diff-badge { font-size: 10px; padding: 2px 7px; }
+    .diff-easy      { background: #1a3220; color: #86efac; }
+    .diff-moderate  { background: #2d2510; color: #fbbf24; }
+    .diff-demanding { background: #2d1a0e; color: #fb923c; }
+    .diff-very-hard { background: #2d1414; color: #f87171; }
     .card-meta { font-size: 12px; color: #666; margin-top: 3px; }
     .card-desc { font-size: 13px; color: #999; margin-top: 10px; line-height: 1.5; }
     .card-desc-pending { font-size: 12px; color: #555; margin-top: 10px; font-style: italic; }
@@ -114,8 +118,8 @@
     .map-filter-btn { padding:5px 14px; border-radius:20px; border:1px solid #333; background:none; color:#aaa; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s; }
     .map-filter-btn.active { color:#000; border-color:transparent; }
     .map-filter-btn.filter-peak.active  { background:#4ade80; }
-    .map-filter-btn.filter-crag.active  { background:#f87171; }
-    .map-filter-btn.filter-hill.active  { background:#facc15; }
+    .map-filter-btn.filter-crag.active  { background:#f97316; }
+    .map-filter-btn.filter-hill.active  { background:#2dd4bf; }
     .map-filter-btn:hover:not(.active) { border-color:#555; color:#fff; }
     .map-count { font-size:12px; color:#555; margin-left:auto; }
 
@@ -128,13 +132,50 @@
     .map-popup-meta { font-size:12px; color:#888; margin-bottom:10px; }
     .map-popup-btn { display:block; width:100%; padding:7px 0; border-radius:6px; border:none; background:#fff; color:#000; font-size:12px; font-weight:600; cursor:pointer; }
     .map-popup-btn:hover { background:#ddd; }
+    /* Map tooltip (hover) */
+    .leaflet-tooltip { background:#111318; border:1px solid #2a2d36; color:#fff; border-radius:6px; padding:6px 10px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,0.5); white-space:nowrap; }
+    .leaflet-tooltip-top:before { border-top-color:#2a2d36; }
+    .map-tooltip-name { font-weight:600; font-size:13px; }
+    .map-tooltip-meta { font-size:11px; color:#aaa; margin-top:1px; }
+    /* Enhanced click popup */
+    .map-popup-desc { font-size:12px; color:#aaa; margin-bottom:8px; line-height:1.4; }
+    .map-popup-counts { display:flex; gap:14px; margin-bottom:10px; font-size:12px; color:#ccc; }
+    /* Weather widget */
+    .weather-widget { background:#0d0f18; border:1px solid #1e2130; border-radius:12px; padding:16px 20px; }
+    .weather-top { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+    .weather-emoji { font-size:40px; line-height:1; flex-shrink:0; }
+    .weather-temp { font-size:30px; font-weight:700; line-height:1; }
+    .weather-condition-label { font-size:13px; color:#888; margin-top:4px; }
+    .weather-wind { text-align:right; margin-left:auto; }
+    .weather-wind-label { font-size:10px; color:#555; text-transform:uppercase; letter-spacing:0.5px; }
+    .weather-wind-val { font-size:18px; font-weight:600; margin-top:2px; }
+    .weather-safety { display:inline-block; padding:5px 14px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:0.3px; }
+    .weather-good    { background:#1a3a1f; color:#4ade80; }
+    .weather-caution { background:#2d2010; color:#fbbf24; }
+    .weather-danger  { background:#2d1414; color:#f87171; }
+    .weather-unavail { color:#444; font-size:13px; font-style:italic; padding:10px 0; }
   </style>
 </head>
 <body>
   <header>
-    <div class="logo">
-      <span>🏔️</span>
-      <h1>Vrh</h1>
+    <div class="logo" onclick="showCategory('hiking')" style="cursor:pointer">
+      <svg viewBox="0 0 180 220" width="54" height="38" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="logoGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#94a3b8"/>
+          </linearGradient>
+        </defs>
+        <path d="M10 50 L90 155 L170 50" fill="none" stroke="url(#logoGrad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 50 L90 155" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.4" stroke-dasharray="4 4"/>
+        <path d="M90 155 L170 50" fill="none" stroke="#94a3b8" stroke-width="1" opacity="0.4" stroke-dasharray="4 4"/>
+        <circle cx="90" cy="155" r="4" fill="#ffffff"/>
+        <line x1="28" y1="77" x2="36" y2="85" stroke="#ffffff" stroke-width="1.5" opacity="0.3"/>
+        <line x1="55" y1="107" x2="63" y2="115" stroke="#ffffff" stroke-width="1.5" opacity="0.3"/>
+        <line x1="117" y1="115" x2="125" y2="107" stroke="#ffffff" stroke-width="1.5" opacity="0.3"/>
+        <line x1="144" y1="85" x2="152" y2="77" stroke="#ffffff" stroke-width="1.5" opacity="0.3"/>
+        <text x="90" y="192" text-anchor="middle" style="font-size:26px;font-weight:900;fill:#ffffff;font-family:system-ui;letter-spacing:10px">VRH</text>
+      </svg>
       <span class="subtitle">Slovenia Outdoor</span>
     </div>
     <div style="display:flex;gap:12px;align-items:center">
@@ -322,6 +363,26 @@
     function tDifficulty(d) { return ((TRANSLATIONS[lang] || TRANSLATIONS.en).difficulty || {})[d] || d; }
     function tActivityType(a) { return ((TRANSLATIONS[lang] || TRANSLATIONS.en).activityType || {})[a] || a; }
 
+    const SUMMIT_DIFF = {
+      easy:      { en: 'Easy',      sl: 'Lahko',          cls: 'diff-easy' },
+      moderate:  { en: 'Moderate',  sl: 'Srednje',        cls: 'diff-moderate' },
+      demanding: { en: 'Demanding', sl: 'Zahtevno',       cls: 'diff-demanding' },
+      very_hard: { en: 'Very Hard', sl: 'Zelo zahtevno',  cls: 'diff-very-hard' },
+    };
+    function summitDiffBadge(s) {
+      if (s.type === 'crag') return '';
+      let key = s.difficulty; // manual override from DB
+      if (!key) {
+        if (s.elevation_m >= 2500)      key = 'very_hard';
+        else if (s.elevation_m >= 1800) key = 'demanding';
+        else if (s.elevation_m >= 1200) key = 'moderate';
+        else                            key = 'easy';
+      }
+      const d = SUMMIT_DIFF[key];
+      if (!d) return '';
+      return `<span class="badge diff-badge ${d.cls}">${lang === 'sl' ? d.sl : d.en}</span>`;
+    }
+
     function applyTranslations() {
       const T = TRANSLATIONS[lang];
       // Primary nav buttons
@@ -463,10 +524,13 @@
       const card = s => {
         const displayName = lang === 'sl' && s.name_sl ? s.name_sl : s.name;
         return `
-        <div class="card" onclick="filterBySummit('${s.id}', '${s.name}')">
+        <div class="card" onclick="openSummitDetail('${s.id}')">
           <div class="card-header">
             <div class="card-title">${displayName}</div>
-            <span class="badge badge-${s.type}">${s.type}</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              <span class="badge badge-${s.type}">${s.type}</span>
+              ${summitDiffBadge(s)}
+            </div>
           </div>
           <div class="card-meta">${s.elevation_m}m elevation</div>
           <div class="card-desc">${desc(s)}</div>
@@ -735,6 +799,143 @@
       }
     }
 
+    // ── Weather helpers ───────────────────────────────────────────
+
+    const SLOVENIA_CENTER = [46.1512, 14.9955];
+
+    function getSummitCoords(summit) {
+      if (summit.lat != null && summit.lng != null) return [summit.lat, summit.lng];
+      const hc = HARDCODED_COORDS[summit.name] || HARDCODED_COORDS[summit.name_sl];
+      return hc || SLOVENIA_CENTER;
+    }
+
+    function wmoCondition(code) {
+      if (code === 0)  return { emoji: '☀️',  en: 'Clear sky',      sl: 'Jasno' };
+      if (code <= 3)   return { emoji: '⛅',  en: 'Partly cloudy',  sl: 'Delno oblačno' };
+      if (code <= 48)  return { emoji: '🌫️', en: 'Foggy',           sl: 'Megleno' };
+      if (code <= 55)  return { emoji: '🌦️', en: 'Drizzle',         sl: 'Rosenje' };
+      if (code <= 67)  return { emoji: '🌧️', en: 'Rainy',           sl: 'Deževno' };
+      if (code <= 77)  return { emoji: '❄️',  en: 'Snowy',          sl: 'Snežno' };
+      if (code <= 82)  return { emoji: '🌦️', en: 'Showers',         sl: 'Plohe' };
+      if (code <= 86)  return { emoji: '🌨️', en: 'Snow showers',    sl: 'Snežne plohe' };
+      return           { emoji: '⛈️',  en: 'Thunderstorm',          sl: 'Nevihta' };
+    }
+
+    function hikingSafety(windspeed, precipitation, weathercode) {
+      const heavyPrecip = precipitation > 2 || weathercode >= 71;
+      const lightPrecip = precipitation > 0 || (weathercode >= 51 && weathercode < 71);
+      if (windspeed > 60 || heavyPrecip)  return { cls: 'weather-danger',  en: 'Dangerous',        sl: 'Nevarno' };
+      if (windspeed >= 30 || lightPrecip) return { cls: 'weather-caution', en: 'Check conditions', sl: 'Preverite razmere' };
+      return                                     { cls: 'weather-good',    en: 'Good for hiking',  sl: 'Primerno za pohod' };
+    }
+
+    async function fetchWeather(lat, lng) {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
+        `&current=temperature_2m,precipitation,weathercode,windspeed_10m&wind_speed_unit=kmh&timezone=auto`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('unavailable');
+      return (await res.json()).current;
+    }
+
+    function buildWeatherHtml(weather) {
+      if (!weather) return `<div class="weather-widget"><div class="weather-unavail">${lang === 'sl' ? 'Vreme ni na voljo.' : 'Weather data unavailable.'}</div></div>`;
+      const cond   = wmoCondition(weather.weathercode);
+      const safety = hikingSafety(weather.windspeed_10m, weather.precipitation, weather.weathercode);
+      return `
+        <div class="weather-widget">
+          <div class="weather-top">
+            <span class="weather-emoji">${cond.emoji}</span>
+            <div>
+              <div class="weather-temp">${Math.round(weather.temperature_2m)}°C</div>
+              <div class="weather-condition-label">${lang === 'sl' ? cond.sl : cond.en}</div>
+            </div>
+            <div class="weather-wind">
+              <div class="weather-wind-label">${lang === 'sl' ? 'Veter' : 'Wind'}</div>
+              <div class="weather-wind-val">${Math.round(weather.windspeed_10m)} km/h</div>
+            </div>
+          </div>
+          <span class="weather-safety ${safety.cls}">${lang === 'sl' ? safety.sl : safety.en}</span>
+        </div>`;
+    }
+
+    // ── Summit detail panel ───────────────────────────────────────
+
+    async function openSummitDetail(summitId) {
+      detailType = 'summit';
+      detailId = summitId;
+      const overlay = document.getElementById('detail-overlay');
+      overlay.style.display = 'block';
+      overlay.scrollTop = 0;
+      document.getElementById('detail-content').innerHTML = '<div class="loading">Loading...</div>';
+
+      const summit = [...allSummits, ...allHills].find(s => s.id === summitId);
+      if (!summit) {
+        document.getElementById('detail-content').innerHTML = '<div class="empty">Summit not found.</div>';
+        return;
+      }
+
+      const [lat, lng] = getSummitCoords(summit);
+      let weather = null;
+      try { weather = await fetchWeather(lat, lng); } catch {}
+
+      renderSummitDetailContent(summit, weather);
+    }
+
+    function renderSummitDetailContent(summit, weather) {
+      const displayName = lang === 'sl' && summit.name_sl ? summit.name_sl : summit.name;
+      const summitTrails  = allTrails.filter(t => t.summit_id === summit.id);
+      const summitRoutes  = allClimbing.filter(r => r.summit_id === summit.id);
+
+      const trailsHtml = summitTrails.length === 0 ? '' : `
+        <div class="detail-section">
+          <div class="detail-section-title">${t('sectionTrails')}</div>
+          <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px">
+            ${summitTrails.map(tr => `
+              <div class="card" onclick="openDetail('trail','${tr.id}')">
+                <div class="card-title" style="font-size:14px">${lang === 'sl' && tr.name_sl ? tr.name_sl : tr.name}</div>
+                <div class="card-meta difficulty-${tr.difficulty}">${tDifficulty(tr.difficulty)}</div>
+                ${tr.distance_km ? `<div class="card-meta">${tr.distance_km}km · +${tr.elevation_gain_m || 0}m</div>` : ''}
+              </div>`).join('')}
+          </div>
+        </div>`;
+
+      const routesHtml = summitRoutes.length === 0 ? '' : `
+        <div class="detail-section">
+          <div class="detail-section-title">${t('sectionClimbing')}</div>
+          <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px">
+            ${summitRoutes.map(r => `
+              <div class="card" onclick="openDetail('climbing','${r.id}')">
+                <div class="card-title" style="font-size:14px">${lang === 'sl' && r.name_sl ? r.name_sl : r.name}</div>
+                <div class="grade">${r.grade_french || r.grade_alpine || ''}</div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+
+      document.getElementById('detail-content').innerHTML = `
+        <div class="card-header" style="margin-bottom:8px">
+          <div class="detail-name">${displayName}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <span class="badge badge-${summit.type}">${summit.type}</span>
+            ${summitDiffBadge(summit)}
+          </div>
+        </div>
+        <div class="detail-meta-row">
+          <div class="detail-meta-item"><span class="val">${summit.elevation_m}m</span>${lang === 'sl' ? 'Višina' : 'Elevation'}</div>
+          ${summit.area_name ? `<div class="detail-meta-item"><span class="val">${summit.area_name}</span>${lang === 'sl' ? 'Območje' : 'Area'}</div>` : ''}
+        </div>
+
+        <div class="detail-section" style="margin-top:18px">
+          <div class="detail-section-title">${lang === 'sl' ? 'Vreme' : 'Weather'}</div>
+          ${buildWeatherHtml(weather)}
+        </div>
+
+        ${desc(summit) ? `<div class="detail-desc" style="margin-top:20px">${desc(summit)}</div>` : ''}
+
+        ${trailsHtml}
+        ${routesHtml}
+      `;
+    }
+
     // ── Detail panel ──────────────────────────────────────────────
 
     let detailType = null;
@@ -895,20 +1096,62 @@
     let mapMarkers = [];
     let mapFilters = { peak: true, crag: true, hill: true };
 
-    function markerColor(type) {
-      if (type === 'crag')  return '#f87171';
-      if (type === 'hill')  return '#facc15';
-      return '#4ade80'; // peak default
-    }
+    // Approximate coordinates for summits not yet in the database
+    const HARDCODED_COORDS = {
+      'Triglav':    [46.3794, 13.8369],
+      'Mangart':    [46.4494, 13.6697],
+      'Jalovec':    [46.4131, 13.7178],
+      'Škrlatica':  [46.3897, 13.8628],
+      'Kanjavec':   [46.3619, 13.8014],
+      'Razor':      [46.3756, 13.7681],
+      'Prisojnik':  [46.3981, 13.7397],
+      'Grintovec':  [46.3706, 14.5297],
+      'Skuta':      [46.3542, 14.4936],
+      'Kočna':      [46.3897, 14.4628],
+      'Ojstrica':   [46.3394, 14.5178],
+      'Brana':      [46.3544, 14.4628],
+      'Planjava':   [46.3461, 14.5019],
+      'Storžič':    [46.3997, 14.2897],
+      'Stol':       [46.4894, 14.0897],
+      'Košuta':     [46.4594, 14.3997],
+      'Kepa':       [46.4897, 13.9197],
+      'Golica':     [46.4694, 13.9997],
+      'Osp':        [45.5731, 13.8697],
+      'Misja Pec':  [45.5631, 13.8597],
+      'Misja Peč':  [45.5631, 13.8597],
+    };
 
     function makeIcon(type) {
-      const color = markerColor(type);
+      if (type === 'peak') {
+        // Upward triangle for high peaks (green)
+        return L.divIcon({
+          className: '',
+          html: `<div style="width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:16px solid #4ade80;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7))"></div>`,
+          iconSize: [18, 16],
+          iconAnchor: [9, 16],
+          popupAnchor: [0, -18],
+          tooltipAnchor: [0, -18]
+        });
+      }
+      if (type === 'hill') {
+        // Small teal circle for hills
+        return L.divIcon({
+          className: '',
+          html: `<div style="width:10px;height:10px;border-radius:50%;background:#2dd4bf;border:2px solid rgba(0,0,0,0.45);box-shadow:0 1px 3px rgba(0,0,0,0.5)"></div>`,
+          iconSize: [10, 10],
+          iconAnchor: [5, 5],
+          popupAnchor: [0, -8],
+          tooltipAnchor: [0, -8]
+        });
+      }
+      // Rotated square (diamond) for crags (orange)
       return L.divIcon({
         className: '',
-        html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid rgba(0,0,0,0.55);box-shadow:0 1px 4px rgba(0,0,0,0.5)"></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-        popupAnchor: [0, -10]
+        html: `<div style="width:12px;height:12px;background:#f97316;border:2px solid rgba(0,0,0,0.45);box-shadow:0 1px 3px rgba(0,0,0,0.5);transform:rotate(45deg)"></div>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+        popupAnchor: [0, -10],
+        tooltipAnchor: [0, -10]
       });
     }
 
@@ -918,7 +1161,7 @@
         updateMapMarkers();
         return;
       }
-      map = L.map('map-container', { zoomControl: true }).setView([46.12, 14.80], 8);
+      map = L.map('map-container', { zoomControl: true }).setView([46.1, 14.5], 8);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
@@ -938,19 +1181,46 @@
 
       let shown = 0;
       for (const item of allItems) {
-        if (item.lat == null || item.lng == null) continue;
+        // Use DB coordinates if available, fall back to hardcoded
+        let lat = item.lat, lng = item.lng;
+        if (lat == null || lng == null) {
+          const hc = HARDCODED_COORDS[item.name] || HARDCODED_COORDS[item.name_sl];
+          if (hc) { lat = hc[0]; lng = hc[1]; }
+        }
+        if (lat == null || lng == null) continue;
+
         const filterKey = item._mapType;
         if (!mapFilters[filterKey]) continue;
 
         const displayName = lang === 'sl' && item.name_sl ? item.name_sl : item.name;
         const typeLabel = item._mapType === 'crag' ? 'Crag' : item._mapType === 'hill' ? 'Hill' : 'Peak';
+        const descFull = lang === 'sl' && item.description_sl ? item.description_sl : item.description;
+        const descShort = descFull ? (descFull.length > 120 ? descFull.slice(0, 120) + '…' : descFull) : '';
+        const trailCount = allTrails.filter(t => t.summit_id === item.id).length;
+        const routeCount = allClimbing.filter(r => r.summit_id === item.id).length;
 
-        const marker = L.marker([item.lat, item.lng], { icon: makeIcon(item._mapType) });
+        const marker = L.marker([lat, lng], { icon: makeIcon(item._mapType) });
+
+        // Hover tooltip — lightweight, just name + elevation + type
+        marker.bindTooltip(
+          `<div class="map-tooltip-name">${displayName}</div>` +
+          `<div class="map-tooltip-meta">${item.elevation_m}m · ${typeLabel}</div>`,
+          { direction: 'top', offset: [0, -4] }
+        );
+
+        // Click popup — full info card
+        const safeName = displayName.replace(/'/g, "\\'");
         marker.bindPopup(`
           <div class="map-popup-name">${displayName}</div>
           <div class="map-popup-meta">${item.elevation_m}m &middot; ${typeLabel}</div>
-          <button class="map-popup-btn" onclick="mapGoToSummit('${item.id}','${displayName.replace(/'/g, "\\'")}')">View routes &amp; trails</button>
-        `, { minWidth: 160 });
+          ${descShort ? `<div class="map-popup-desc">${descShort}</div>` : ''}
+          <div class="map-popup-counts">
+            <span>🥾 ${trailCount} trail${trailCount !== 1 ? 's' : ''}</span>
+            ${routeCount > 0 || item._mapType === 'crag' ? `<span>🧗 ${routeCount} route${routeCount !== 1 ? 's' : ''}</span>` : ''}
+          </div>
+          <button class="map-popup-btn" onclick="mapGoToSummit('${item.id}')">View details</button>
+        `, { minWidth: 190, maxWidth: 250 });
+
         marker.addTo(map);
         mapMarkers.push(marker);
         shown++;
@@ -969,10 +1239,9 @@
       if (map) updateMapMarkers();
     }
 
-    function mapGoToSummit(id, name) {
+    function mapGoToSummit(id) {
       map.closePopup();
-      showCategory('hiking');
-      filterBySummit(id, name);
+      openSummitDetail(id);
     }
 
     async function submitDetailPhoto() {

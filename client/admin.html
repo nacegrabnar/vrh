@@ -214,9 +214,21 @@
             </div>
           </div>
 
-          <div class="form-row" style="max-width:200px">
-            <label>Elevation (m) <span class="sl">Nadmorska višina (m)</span></label>
-            <input type="number" id="s-elevation" placeholder="e.g. 2864" min="0">
+          <div class="form-row-2">
+            <div style="max-width:200px">
+              <label>Elevation (m) <span class="sl">Nadmorska višina (m)</span></label>
+              <input type="number" id="s-elevation" placeholder="e.g. 2864" min="0">
+            </div>
+            <div>
+              <label>Difficulty override <span class="sl">Zahtevnost (ročno)</span></label>
+              <select id="s-difficulty">
+                <option value="">— auto from elevation —</option>
+                <option value="easy">Easy / Lahko</option>
+                <option value="moderate">Moderate / Srednje</option>
+                <option value="demanding">Demanding / Zahtevno</option>
+                <option value="very_hard">Very Hard / Zelo zahtevno</option>
+              </select>
+            </div>
           </div>
 
           <hr class="divider">
@@ -578,18 +590,19 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name,
-            name_sl:        val('s-name-sl')   || null,
-            area_id:        val('s-area')       || null,
+            name_sl:        val('s-name-sl')    || null,
+            area_id:        val('s-area')        || null,
             elevation_m:    elevation,
             type:           val('s-type'),
-            description:    val('s-desc')       || null,
-            description_sl: val('s-desc-sl')    || null,
+            difficulty:     val('s-difficulty')  || null,
+            description:    val('s-desc')        || null,
+            description_sl: val('s-desc-sl')     || null,
           })
         });
         const data = await res.json();
         if (!res.ok) { showMsg('s-msg', 'error', data.error || 'Failed to add summit.'); return; }
         showMsg('s-msg', 'success', `Summit "${data.name}" added successfully!`);
-        clearForm(['s-name','s-name-sl','s-area','s-elevation','s-type','s-desc','s-desc-sl']);
+        clearForm(['s-name','s-name-sl','s-area','s-elevation','s-type','s-difficulty','s-desc','s-desc-sl']);
       } catch {
         showMsg('s-msg', 'error', 'Network error — could not reach server.');
       } finally {
