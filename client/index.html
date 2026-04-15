@@ -154,6 +154,32 @@
     .weather-caution { background:#2d2010; color:#fbbf24; }
     .weather-danger  { background:#2d1414; color:#f87171; }
     .weather-unavail { color:#444; font-size:13px; font-style:italic; padding:10px 0; }
+
+    /* Tick button */
+    .tick-btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; border-radius:8px; border:1px solid #333; background:none; color:#aaa; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.2s; margin-top:4px; }
+    .tick-btn:hover:not(.ticked) { border-color:#4ade80; color:#4ade80; }
+    .tick-btn.ticked { background:#1a3a2a; border-color:#4ade80; color:#4ade80; }
+    .tick-btn .tick-icon { font-size:16px; line-height:1; }
+    .tick-form { background:#222; border-radius:8px; padding:14px; margin-top:10px; display:none; }
+    .tick-form label { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px; margin-top:10px; }
+    .tick-form label:first-child { margin-top:0; }
+
+    /* My Ascents overlay */
+    .ascents-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:300; overflow-y:auto; }
+    .ascents-panel { max-width:680px; margin:40px auto 60px; background:#1a1d26; border:1px solid #2a2d36; border-radius:16px; padding:36px; position:relative; }
+    .ascents-close { position:absolute; top:14px; right:18px; background:none; border:none; color:#555; font-size:26px; cursor:pointer; line-height:1; padding:4px 8px; }
+    .ascents-close:hover { color:#fff; }
+    .ascents-title { font-size:22px; font-weight:700; margin-bottom:6px; }
+    .ascents-subtitle { font-size:13px; color:#555; margin-bottom:24px; }
+    .ascents-section-title { font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #222; padding-bottom:8px; margin:20px 0 12px; }
+    .ascent-item { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid #1e2130; }
+    .ascent-item:last-child { border-bottom:none; }
+    .ascent-name { font-size:14px; font-weight:600; }
+    .ascent-meta { font-size:12px; color:#666; margin-top:3px; }
+    .ascent-notes { font-size:12px; color:#888; margin-top:4px; font-style:italic; }
+    .ascent-remove { background:none; border:none; color:#444; cursor:pointer; font-size:18px; padding:2px 6px; line-height:1; flex-shrink:0; transition:color 0.15s; }
+    .ascent-remove:hover { color:#f87171; }
+    .ascents-empty { color:#555; font-size:14px; padding:20px 0; }
   </style>
 </head>
 <body>
@@ -188,9 +214,10 @@
         <button class="auth-btn" data-i18n="login" onclick="showModal('login')">Log in</button>
         <button class="auth-btn primary" data-i18n="signup" onclick="showModal('register')">Sign up</button>
       </div>
-      <div id="user-menu" style="display:none">
+      <div id="user-menu" style="display:none;align-items:center;gap:8px">
         <span id="username-display" style="font-size:14px;color:#aaa"></span>
-        <button class="auth-btn" data-i18n="logout" onclick="logout()" style="margin-left:8px">Log out</button>
+        <button class="auth-btn" onclick="openAscents()">My Ascents</button>
+        <button class="auth-btn" data-i18n="logout" onclick="logout()">Log out</button>
       </div>
     </div>
   </header>
@@ -207,6 +234,16 @@
       <input class="form-input" type="password" id="auth-password" placeholder="Password">
       <button class="auth-btn primary full" id="modal-submit" onclick="submitAuth()">Submit</button>
       <button class="auth-btn full" onclick="closeModal()" style="margin-top:8px">Cancel</button>
+    </div>
+  </div>
+
+  <!-- My Ascents overlay -->
+  <div id="ascents-overlay" class="ascents-overlay" onclick="handleAscentsOverlayClick(event)">
+    <div class="ascents-panel">
+      <button class="ascents-close" onclick="closeAscents()">&#x2715;</button>
+      <div class="ascents-title">My Ascents</div>
+      <div class="ascents-subtitle" id="ascents-subtitle"></div>
+      <div id="ascents-content"><div class="loading">Loading...</div></div>
     </div>
   </div>
 
@@ -698,6 +735,235 @@
     let currentUser = null;
     let authMode = 'login';
 
+    // ── Ticklist state ────────────────────────────────────────────
+    // Maps of itemId → ticklistRowId for the current user
+    let myTicks = { summits: {}, trails: {}, routes: {} };
+
+    async function loadMyTicks() {
+      const token = localStorage.getItem('vrh_token');
+      if (!token) return;
+      try {
+        const res = await fetch('/ticklist/check', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) myTicks = await res.json();
+      } catch {}
+    }
+
+    async function toggleTick({ summitId, trailId, routeId, name }) {
+      const token = localStorage.getItem('vrh_token');
+      if (!token) { showModal('login'); return; }
+
+      const existing = summitId ? myTicks.summits[summitId]
+                     : trailId  ? myTicks.trails[trailId]
+                                : myTicks.routes[routeId];
+
+      if (existing) {
+        // untick
+        const res = await fetch(`/ticklist/${existing}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          if (summitId) delete myTicks.summits[summitId];
+          if (trailId)  delete myTicks.trails[trailId];
+          if (routeId)  delete myTicks.routes[routeId];
+          updateTickButton(summitId || trailId || routeId, false);
+        }
+      } else {
+        // show form to capture date + notes before saving
+        showTickForm({ summitId, trailId, routeId, name });
+      }
+    }
+
+    function showTickForm({ summitId, trailId, routeId, name }) {
+      const formEl = document.getElementById('tick-form-container');
+      if (!formEl) return;
+      formEl.style.display = 'block';
+      formEl.dataset.summitId = summitId || '';
+      formEl.dataset.trailId  = trailId  || '';
+      formEl.dataset.routeId  = routeId  || '';
+      document.getElementById('tick-form-date').value  = '';
+      document.getElementById('tick-form-notes').value = '';
+    }
+
+    async function submitTickForm() {
+      const token = localStorage.getItem('vrh_token');
+      const formEl = document.getElementById('tick-form-container');
+      const summitId = formEl.dataset.summitId || null;
+      const trailId  = formEl.dataset.trailId  || null;
+      const routeId  = formEl.dataset.routeId  || null;
+      const ascentDate = document.getElementById('tick-form-date').value  || null;
+      const notes      = document.getElementById('tick-form-notes').value || null;
+
+      const body = {
+        summit_id:         summitId || undefined,
+        trail_id:          trailId  || undefined,
+        climbing_route_id: routeId  || undefined,
+        ascent_date:       ascentDate,
+        notes
+      };
+
+      const res = await fetch('/ticklist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        const row = await res.json();
+        if (summitId) myTicks.summits[summitId] = row.id;
+        if (trailId)  myTicks.trails[trailId]   = row.id;
+        if (routeId)  myTicks.routes[routeId]   = row.id;
+        formEl.style.display = 'none';
+        updateTickButton(summitId || trailId || routeId, true);
+      }
+    }
+
+    function cancelTickForm() {
+      const formEl = document.getElementById('tick-form-container');
+      if (formEl) formEl.style.display = 'none';
+    }
+
+    function updateTickButton(itemId, ticked) {
+      const btn = document.getElementById(`tick-btn-${itemId}`);
+      if (!btn) return;
+      if (ticked) {
+        btn.classList.add('ticked');
+        btn.innerHTML = `<span class="tick-icon">✓</span> Ticked`;
+      } else {
+        btn.classList.remove('ticked');
+        btn.innerHTML = `<span class="tick-icon">○</span> Mark as done`;
+      }
+    }
+
+    function buildTickSection({ summitId, trailId, routeId }) {
+      const itemId = summitId || trailId || routeId;
+      const ticked = summitId ? !!myTicks.summits[summitId]
+                   : trailId  ? !!myTicks.trails[trailId]
+                              : !!myTicks.routes[routeId];
+      const tickedClass = ticked ? 'ticked' : '';
+      const tickLabel   = ticked ? '✓ Ticked' : '○ Mark as done';
+      const onclickArgs = summitId ? `{summitId:'${summitId}'}`
+                        : trailId  ? `{trailId:'${trailId}'}`
+                                   : `{routeId:'${routeId}'}`;
+      return `
+        <div class="detail-section">
+          <div class="detail-section-title">${lang === 'sl' ? 'Moj seznam' : 'My List'}</div>
+          <button id="tick-btn-${itemId}" class="tick-btn ${tickedClass}"
+            onclick="toggleTick(${onclickArgs})">
+            <span class="tick-icon">${ticked ? '✓' : '○'}</span>
+            ${tickLabel}
+          </button>
+          <div id="tick-form-container" class="tick-form"
+            data-summit-id="${summitId || ''}" data-trail-id="${trailId || ''}" data-route-id="${routeId || ''}">
+            <label>Date of ascent (optional)</label>
+            <input class="form-input" type="date" id="tick-form-date" style="margin-bottom:0">
+            <label>Notes (optional)</label>
+            <textarea class="form-input" id="tick-form-notes" rows="2" style="resize:vertical;margin-bottom:0" placeholder="How did it go?"></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="auth-btn primary" onclick="submitTickForm()">Save</button>
+              <button class="auth-btn" onclick="cancelTickForm()">Cancel</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── My Ascents overlay ────────────────────────────────────────
+
+    function handleAscentsOverlayClick(e) {
+      if (e.target === document.getElementById('ascents-overlay')) closeAscents();
+    }
+
+    function closeAscents() {
+      document.getElementById('ascents-overlay').style.display = 'none';
+    }
+
+    async function openAscents() {
+      document.getElementById('ascents-overlay').style.display = 'block';
+      document.getElementById('ascents-content').innerHTML = '<div class="loading">Loading...</div>';
+      const token = localStorage.getItem('vrh_token');
+      const res = await fetch('/ticklist/me', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) {
+        document.getElementById('ascents-content').innerHTML = '<div class="ascents-empty">Could not load ascents.</div>';
+        return;
+      }
+      const ticks = await res.json();
+      renderAscents(ticks);
+    }
+
+    function renderAscents(ticks) {
+      const summitTicks  = ticks.filter(t => t.summit_id);
+      const trailTicks   = ticks.filter(t => t.trail_id);
+      const routeTicks   = ticks.filter(t => t.climbing_route_id);
+
+      document.getElementById('ascents-subtitle').textContent =
+        `${ticks.length} total · ${summitTicks.length} summit${summitTicks.length !== 1 ? 's' : ''} · ${trailTicks.length} trail${trailTicks.length !== 1 ? 's' : ''} · ${routeTicks.length} route${routeTicks.length !== 1 ? 's' : ''}`;
+
+      if (ticks.length === 0) {
+        document.getElementById('ascents-content').innerHTML =
+          `<div class="ascents-empty">No ascents logged yet. Open any summit, trail, or route and click "Mark as done".</div>`;
+        return;
+      }
+
+      function tickItem(t) {
+        const name = t.summit_name || t.trail_name || t.route_name || 'Unknown';
+        const nameSl = t.summit_name_sl || t.trail_name_sl || t.route_name_sl || '';
+        const displayName = lang === 'sl' && nameSl ? nameSl : name;
+        const meta = [
+          t.elevation_m ? `${t.elevation_m}m` : null,
+          t.distance_km ? `${t.distance_km}km` : null,
+          t.grade_french || t.grade_uiaa || null,
+          t.ascent_date ? new Date(t.ascent_date).toLocaleDateString() : null
+        ].filter(Boolean).join(' · ');
+        return `
+          <div class="ascent-item" id="ascent-row-${t.id}">
+            <div>
+              <div class="ascent-name">${displayName}</div>
+              ${meta ? `<div class="ascent-meta">${meta}</div>` : ''}
+              ${t.notes ? `<div class="ascent-notes">"${t.notes}"</div>` : ''}
+            </div>
+            <button class="ascent-remove" title="Remove" onclick="removeTick('${t.id}','${t.summit_id||''}','${t.trail_id||''}','${t.climbing_route_id||''}')">×</button>
+          </div>`;
+      }
+
+      let html = '';
+      if (summitTicks.length) {
+        html += `<div class="ascents-section-title">Summits & Crags (${summitTicks.length})</div>`;
+        html += summitTicks.map(tickItem).join('');
+      }
+      if (trailTicks.length) {
+        html += `<div class="ascents-section-title">Trails (${trailTicks.length})</div>`;
+        html += trailTicks.map(tickItem).join('');
+      }
+      if (routeTicks.length) {
+        html += `<div class="ascents-section-title">Climbing Routes (${routeTicks.length})</div>`;
+        html += routeTicks.map(tickItem).join('');
+      }
+      document.getElementById('ascents-content').innerHTML = html;
+    }
+
+    async function removeTick(tickId, summitId, trailId, routeId) {
+      const token = localStorage.getItem('vrh_token');
+      const res = await fetch(`/ticklist/${tickId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        if (summitId) delete myTicks.summits[summitId];
+        if (trailId)  delete myTicks.trails[trailId];
+        if (routeId)  delete myTicks.routes[routeId];
+        const row = document.getElementById(`ascent-row-${tickId}`);
+        if (row) row.remove();
+        // update subtitle count
+        const remaining = document.querySelectorAll('.ascent-item').length;
+        if (remaining === 0) {
+          document.getElementById('ascents-content').innerHTML =
+            `<div class="ascents-empty">No ascents logged yet. Open any summit, trail, or route and click "Mark as done".</div>`;
+        }
+        document.getElementById('ascents-subtitle').textContent =
+          remaining + ' total';
+      }
+    }
+
     function showModal(mode) {
       authMode = mode;
       document.getElementById('modal-title').textContent = mode === 'login' ? t('loginTitle') : t('registerTitle');
@@ -739,6 +1005,7 @@
         localStorage.setItem('vrh_user', JSON.stringify(data.user));
         currentUser = data.user;
         updateAuthUI();
+        loadMyTicks();
         closeModal();
       } catch (err) {
         errorEl.textContent = 'Something went wrong, please try again.';
@@ -750,6 +1017,7 @@
       localStorage.removeItem('vrh_token');
       localStorage.removeItem('vrh_user');
       currentUser = null;
+      myTicks = { summits: {}, trails: {}, routes: {} };
       updateAuthUI();
     }
 
@@ -769,6 +1037,7 @@
     if (savedUser) {
       currentUser = JSON.parse(savedUser);
       updateAuthUI();
+      loadMyTicks();
     }
     loadAll();
     applyTranslations();
@@ -924,6 +1193,8 @@
           ${summit.area_name ? `<div class="detail-meta-item"><span class="val">${summit.area_name}</span>${lang === 'sl' ? 'Območje' : 'Area'}</div>` : ''}
         </div>
 
+        ${buildTickSection({ summitId: summit.id })}
+
         <div class="detail-section" style="margin-top:18px">
           <div class="detail-section-title">${lang === 'sl' ? 'Vreme' : 'Weather'}</div>
           ${buildWeatherHtml(weather)}
@@ -1047,6 +1318,10 @@
           <button class="auth-btn" onclick="document.getElementById('detail-photo-form').style.display='none'" style="margin-left:8px">Cancel</button>
         </div>` : '<div style="color:#555;font-size:12px;margin-top:10px">Log in to upload photos.</div>';
 
+      const tickSectionHtml = isClimbing
+        ? buildTickSection({ routeId: item.id })
+        : buildTickSection({ trailId: item.id });
+
       document.getElementById('detail-content').innerHTML = `
         <div class="card-header" style="margin-bottom:6px">
           <div class="detail-name">${lang === 'sl' && item.name_sl ? item.name_sl : item.name}</div>
@@ -1055,6 +1330,8 @@
         ${gradesHtml}
         ${metaHtml}
         ${desc(item) ? `<div class="detail-desc">${desc(item)}</div>` : ''}
+
+        ${tickSectionHtml}
 
         <div class="detail-section">
           <div class="detail-section-title">Conditions reports</div>

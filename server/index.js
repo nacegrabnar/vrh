@@ -9,6 +9,7 @@ const authRouter = require('./routes/auth');
 const conditionsRouter = require('./routes/conditions');
 const photosRouter = require('./routes/photos');
 const { router: adminRouter } = require('./routes/admin');
+const ticklistRouter = require('./routes/ticklist');
 const path = require('path');
 
 const app = express();
@@ -29,6 +30,7 @@ app.use('/auth', authRouter);
 app.use('/conditions', conditionsRouter);
 app.use('/photos', photosRouter);
 app.use('/admin-api', adminRouter);
+app.use('/ticklist', ticklistRouter);
 
 app.get('/admin', (_req, res) => {
   res.sendFile(path.join(__dirname, '../client/admin.html'));
