@@ -148,6 +148,13 @@
     .weather-wind { text-align:right; margin-left:auto; }
     .weather-wind-label { font-size:10px; color:#555; text-transform:uppercase; letter-spacing:0.5px; }
     .weather-wind-val { font-size:18px; font-weight:600; margin-top:2px; }
+    .weather-meta-row { display:flex; align-items:center; gap:6px; margin-bottom:10px; font-size:13px; }
+    .weather-meta-label { color:#555; }
+    .weather-meta-val { color:#ccc; font-weight:600; }
+    .weather-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:4px; padding-top:10px; border-top:1px solid #1e2130; }
+    .weather-source-badge { font-size:11px; font-weight:700; letter-spacing:0.4px; padding:3px 9px; border-radius:20px; background:#1a2a1a; color:#4ade80; }
+    .weather-source-badge.source-openmeteo { background:#1a1f2e; color:#60a5fa; }
+    .weather-updated { font-size:11px; color:#444; }
     .weather-unavail { color:#444; font-size:13px; font-style:italic; padding:10px 0; }
 
     /* Tick button */
@@ -1071,42 +1078,138 @@
       return hc || SLOVENIA_CENTER;
     }
 
+    // Maps summit name (lowercase) → ARSO station
+    const ARSO_STATION_MAP = {
+      'triglav':           { id: 'KREDA-ICA', label: 'Kredarica' },
+      'škrlatica':         { id: 'KREDA-ICA', label: 'Kredarica' },
+      'mangart':           { id: 'KREDA-ICA', label: 'Kredarica' },
+      'jalovec':           { id: 'KREDA-ICA', label: 'Kredarica' },
+      'kanjavec':          { id: 'KREDA-ICA', label: 'Kredarica' },
+      'razor':             { id: 'KREDA-ICA', label: 'Kredarica' },
+      'prisojnik':         { id: 'KREDA-ICA', label: 'Kredarica' },
+      'vogel':             { id: 'VOGEL',     label: 'Vogel' },
+      'bogatin':           { id: 'VOGEL',     label: 'Vogel' },
+      'črna prst':         { id: 'VOGEL',     label: 'Vogel' },
+      'veliki draški vrh': { id: 'VOGEL',     label: 'Vogel' },
+      'stol':              { id: 'RATECE',    label: 'Rateče' },
+      'kepa':              { id: 'RATECE',    label: 'Rateče' },
+      'golica':            { id: 'RATECE',    label: 'Rateče' },
+      'grintovec':         { id: 'LISCA',     label: 'Lisca' },
+      'skuta':             { id: 'LISCA',     label: 'Lisca' },
+      'kočna':             { id: 'LISCA',     label: 'Lisca' },
+      'ojstrica':          { id: 'LISCA',     label: 'Lisca' },
+      'brana':             { id: 'LISCA',     label: 'Lisca' },
+      'storžič':           { id: 'LISCA',     label: 'Lisca' },
+    };
+
     function wmoCondition(code) {
       if (code === 0)  return { emoji: '☀️',  en: 'Clear sky',      sl: 'Jasno' };
       if (code <= 3)   return { emoji: '⛅',  en: 'Partly cloudy',  sl: 'Delno oblačno' };
       if (code <= 48)  return { emoji: '🌫️', en: 'Foggy',           sl: 'Megleno' };
       if (code <= 55)  return { emoji: '🌦️', en: 'Drizzle',         sl: 'Rosenje' };
       if (code <= 67)  return { emoji: '🌧️', en: 'Rainy',           sl: 'Deževno' };
-      if (code <= 77)  return { emoji: '❄️',  en: 'Snowy',          sl: 'Snežno' };
+      if (code <= 77)  return { emoji: '❄️',  en: 'Snowy',           sl: 'Snežno' };
       if (code <= 82)  return { emoji: '🌦️', en: 'Showers',         sl: 'Plohe' };
       if (code <= 86)  return { emoji: '🌨️', en: 'Snow showers',    sl: 'Snežne plohe' };
-      return           { emoji: '⛈️',  en: 'Thunderstorm',          sl: 'Nevihta' };
+      return           { emoji: '⛈️',  en: 'Thunderstorm',           sl: 'Nevihta' };
     }
 
+    // Map ARSO Slovenian description text to an emoji
+    function descToEmoji(desc) {
+      if (!desc) return '🌡️';
+      const d = desc.toLowerCase();
+      if (d.includes('jasno') || d.includes('clear'))             return '☀️';
+      if (d.includes('delno oblačno') || d.includes('partly'))    return '⛅';
+      if (d.includes('oblačno') || d.includes('cloud'))           return '☁️';
+      if (d.includes('megla') || d.includes('fog'))               return '🌫️';
+      if (d.includes('snežne plohe') || d.includes('snow show'))  return '🌨️';
+      if (d.includes('sneg') || d.includes('snow'))               return '❄️';
+      if (d.includes('nevihta') || d.includes('thunder'))         return '⛈️';
+      if (d.includes('ploha') || d.includes('shower'))            return '🌦️';
+      if (d.includes('dež') || d.includes('rain') || d.includes('drizzle')) return '🌧️';
+      return '🌡️';
+    }
 
-    async function fetchWeather(lat, lng) {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
-        `&current=temperature_2m,precipitation,weathercode,windspeed_10m&wind_speed_unit=kmh&timezone=auto`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('unavailable');
-      return (await res.json()).current;
+    async function fetchWeather(summit) {
+      const key     = (summit.name || '').toLowerCase().trim();
+      const station = ARSO_STATION_MAP[key];
+
+      if (station) {
+        try {
+          const res = await fetch(`/weather/arso/${station.id}`);
+          if (res.ok) return await res.json();
+        } catch {}
+        // ARSO failed — fall through to Open-Meteo
+      }
+
+      const [lat, lng] = getSummitCoords(summit);
+      const res = await fetch(`/weather/fallback?lat=${lat}&lon=${lng}`);
+      if (!res.ok) throw new Error('Weather unavailable');
+      return await res.json();
     }
 
     function buildWeatherHtml(weather) {
-      if (!weather) return `<div class="weather-widget"><div class="weather-unavail">${lang === 'sl' ? 'Vreme ni na voljo.' : 'Weather data unavailable.'}</div></div>`;
-      const cond = wmoCondition(weather.weathercode);
+      const unavail = lang === 'sl' ? 'Vreme ni na voljo.' : 'Weather data unavailable.';
+      if (!weather) return `<div class="weather-widget"><div class="weather-unavail">${unavail}</div></div>`;
+
+      // Resolve description text + emoji
+      let descText, emoji;
+      if (weather.source === 'openmeteo' && weather.weathercode != null) {
+        const cond = wmoCondition(weather.weathercode);
+        descText = lang === 'sl' ? cond.sl : cond.en;
+        emoji    = cond.emoji;
+      } else {
+        descText = weather.description || (lang === 'sl' ? 'Ni podatka' : 'No data');
+        emoji    = descToEmoji(weather.description);
+      }
+
+      // i18n labels
+      const lbl = {
+        wind:     lang === 'sl' ? 'Veter'              : 'Wind',
+        humidity: lang === 'sl' ? 'Vlažnost'           : 'Humidity',
+        updated:  lang === 'sl' ? 'Zadnja posodobitev' : 'Last updated',
+        source:   lang === 'sl' ? 'Vir podatkov'       : 'Data source',
+      };
+
+      // Format timestamp
+      let updatedStr = '';
+      if (weather.updated_at) {
+        try {
+          updatedStr = new Date(weather.updated_at).toLocaleTimeString(
+            lang === 'sl' ? 'sl-SI' : 'en-GB',
+            { hour: '2-digit', minute: '2-digit' }
+          );
+        } catch {}
+      }
+
+      const windVal  = weather.wind_speed != null ? `${weather.wind_speed} km/h` : '—';
+      const humidRow = weather.humidity   != null
+        ? `<div class="weather-meta-row">
+             <span class="weather-meta-label">${lbl.humidity}</span>
+             <span class="weather-meta-val">${Math.round(weather.humidity)}%</span>
+           </div>`
+        : '';
+
+      const badgeClass = weather.source === 'openmeteo' ? 'weather-source-badge source-openmeteo' : 'weather-source-badge';
+      const sourceLabel = weather.source_label || 'Open-Meteo';
+
       return `
         <div class="weather-widget">
           <div class="weather-top">
-            <span class="weather-emoji">${cond.emoji}</span>
+            <span class="weather-emoji">${emoji}</span>
             <div>
-              <div class="weather-temp">${Math.round(weather.temperature_2m)}°C</div>
-              <div class="weather-condition-label">${lang === 'sl' ? cond.sl : cond.en}</div>
+              <div class="weather-temp">${Math.round(weather.temperature)}°C</div>
+              <div class="weather-condition-label">${descText}</div>
             </div>
             <div class="weather-wind">
-              <div class="weather-wind-label">${lang === 'sl' ? 'Veter' : 'Wind'}</div>
-              <div class="weather-wind-val">${Math.round(weather.windspeed_10m)} km/h</div>
+              <div class="weather-wind-label">${lbl.wind}</div>
+              <div class="weather-wind-val">${windVal}</div>
             </div>
+          </div>
+          ${humidRow}
+          <div class="weather-footer">
+            <span class="${badgeClass}">${sourceLabel}</span>
+            ${updatedStr ? `<span class="weather-updated">${lbl.updated}: ${updatedStr}</span>` : ''}
           </div>
         </div>`;
     }
@@ -1127,9 +1230,8 @@
         return;
       }
 
-      const [lat, lng] = getSummitCoords(summit);
       let weather = null;
-      try { weather = await fetchWeather(lat, lng); } catch {}
+      try { weather = await fetchWeather(summit); } catch {}
 
       renderSummitDetailContent(summit, weather);
     }

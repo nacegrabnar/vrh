@@ -10,6 +10,7 @@ const conditionsRouter = require('./routes/conditions');
 const photosRouter = require('./routes/photos');
 const { router: adminRouter } = require('./routes/admin');
 const ticklistRouter = require('./routes/ticklist');
+const weatherRouter  = require('./routes/weather');
 const path = require('path');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/conditions', conditionsRouter);
 app.use('/photos', photosRouter);
 app.use('/admin-api', adminRouter);
 app.use('/ticklist', ticklistRouter);
+app.use('/weather',  weatherRouter);
 
 app.get('/admin', (_req, res) => {
   res.sendFile(path.join(__dirname, '../client/admin.html'));
