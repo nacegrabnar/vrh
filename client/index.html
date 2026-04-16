@@ -148,10 +148,6 @@
     .weather-wind { text-align:right; margin-left:auto; }
     .weather-wind-label { font-size:10px; color:#555; text-transform:uppercase; letter-spacing:0.5px; }
     .weather-wind-val { font-size:18px; font-weight:600; margin-top:2px; }
-    .weather-safety { display:inline-block; padding:5px 14px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:0.3px; }
-    .weather-good    { background:#1a3a1f; color:#4ade80; }
-    .weather-caution { background:#2d2010; color:#fbbf24; }
-    .weather-danger  { background:#2d1414; color:#f87171; }
     .weather-unavail { color:#444; font-size:13px; font-style:italic; padding:10px 0; }
 
     /* Tick button */
@@ -1087,13 +1083,6 @@
       return           { emoji: '⛈️',  en: 'Thunderstorm',          sl: 'Nevihta' };
     }
 
-    function hikingSafety(windspeed, precipitation, weathercode) {
-      const heavyPrecip = precipitation > 2 || weathercode >= 71;
-      const lightPrecip = precipitation > 0 || (weathercode >= 51 && weathercode < 71);
-      if (windspeed > 60 || heavyPrecip)  return { cls: 'weather-danger',  en: 'Dangerous',        sl: 'Nevarno' };
-      if (windspeed >= 30 || lightPrecip) return { cls: 'weather-caution', en: 'Check conditions', sl: 'Preverite razmere' };
-      return                                     { cls: 'weather-good',    en: 'Good for hiking',  sl: 'Primerno za pohod' };
-    }
 
     async function fetchWeather(lat, lng) {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
@@ -1105,8 +1094,7 @@
 
     function buildWeatherHtml(weather) {
       if (!weather) return `<div class="weather-widget"><div class="weather-unavail">${lang === 'sl' ? 'Vreme ni na voljo.' : 'Weather data unavailable.'}</div></div>`;
-      const cond   = wmoCondition(weather.weathercode);
-      const safety = hikingSafety(weather.windspeed_10m, weather.precipitation, weather.weathercode);
+      const cond = wmoCondition(weather.weathercode);
       return `
         <div class="weather-widget">
           <div class="weather-top">
@@ -1120,7 +1108,6 @@
               <div class="weather-wind-val">${Math.round(weather.windspeed_10m)} km/h</div>
             </div>
           </div>
-          <span class="weather-safety ${safety.cls}">${lang === 'sl' ? safety.sl : safety.en}</span>
         </div>`;
     }
 
