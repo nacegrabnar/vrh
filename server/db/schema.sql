@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS postgis;
+
 
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -17,7 +17,7 @@ CREATE TABLE areas (
   slug VARCHAR(255) UNIQUE NOT NULL,
   region VARCHAR(255),
   description TEXT,
-  location GEOGRAPHY(POINT, 4326),
+  latitude FLOAT, longitude FLOAT,
   elevation_min FLOAT,
   elevation_max FLOAT,
   created_at TIMESTAMP DEFAULT NOW()
@@ -29,7 +29,7 @@ CREATE TABLE summits (
   name VARCHAR(255) NOT NULL,
   name_sl VARCHAR(255),
   elevation_m FLOAT NOT NULL,
-  location GEOGRAPHY(POINT, 4326),
+  latitude FLOAT, longitude FLOAT,
   description TEXT,
   description_sl TEXT,
   type VARCHAR(50) DEFAULT 'peak',
@@ -44,7 +44,7 @@ CREATE TABLE trails (
   distance_km FLOAT,
   elevation_gain_m FLOAT,
   activity_type VARCHAR(50) DEFAULT 'hiking',
-  path GEOGRAPHY(LINESTRING, 4326),
+  path TEXT,
   description TEXT,
   description_sl TEXT,
   created_at TIMESTAMP DEFAULT NOW()
@@ -94,6 +94,6 @@ CREATE TABLE photos (
   climbing_route_id UUID REFERENCES climbing_routes(id) ON DELETE CASCADE,
   url VARCHAR(500) NOT NULL,
   caption TEXT,
-  location GEOGRAPHY(POINT, 4326),
+  latitude FLOAT, longitude FLOAT,
   taken_at TIMESTAMP DEFAULT NOW()
 );

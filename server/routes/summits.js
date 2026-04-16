@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
     const type = req.query.type;
     let rows;
 
-    const latLng = ', ST_Y(s.location::geometry) AS lat, ST_X(s.location::geometry) AS lng';
+    const latLng = ', s.latitude, s.longitude';
     if (type === 'hills') {
       const result = await pool.query(
         'SELECT s.*, a.name AS area_name' + latLng +
