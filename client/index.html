@@ -10,15 +10,11 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: system-ui, sans-serif; background: #0f1117; color: #fff; }
-    header { padding: 20px 40px; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; }
-    .logo { display: flex; align-items: center; text-decoration: none; }
+    header { padding: 16px 40px; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; background: #0f1117; }
+    .logo { display: flex; align-items: center; text-decoration: none; cursor: pointer; }
     .search-bar { padding: 8px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1d26; color: #fff; font-size: 14px; width: 260px; outline: none; }
     .search-bar:focus { border-color: #555; }
-    .tabs { display: flex; gap: 8px; padding: 20px 40px 0; }
-    .tab { padding: 9px 22px; border-radius: 8px; border: 1px solid #333; background: none; color: #aaa; cursor: pointer; font-size: 14px; transition: all 0.2s; }
-    .tab.active { background: #fff; color: #000; border-color: #fff; }
-    .tab:hover:not(.active) { border-color: #555; color: #fff; }
-    .container { padding: 20px 40px; }
+    .container { padding: 24px 40px; }
     .section-title { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
     .card { background: #1a1d26; border: 1px solid #2a2d36; border-radius: 12px; padding: 18px; cursor: pointer; transition: all 0.2s; }
@@ -39,7 +35,6 @@
     .diff-very-hard { background: #2d1414; color: #f87171; }
     .card-meta { font-size: 12px; color: #666; margin-top: 3px; }
     .card-desc { font-size: 13px; color: #999; margin-top: 10px; line-height: 1.5; }
-    .card-desc-pending { font-size: 12px; color: #555; margin-top: 10px; font-style: italic; }
     .grade { font-size: 20px; font-weight: 700; color: #f59e0b; margin: 6px 0; }
     .grade span { font-size: 13px; color: #666; }
     .loading { color: #666; padding: 60px; text-align: center; font-size: 14px; }
@@ -62,7 +57,7 @@
     .status-good { color: #4ade80; }
     .status-fair { color: #facc15; }
     .status-poor { color: #f87171; }
-    .status-closed { color: #f87171; font-weight:600; }
+    .status-closed { color: #f87171; font-weight: 600; }
     .report-meta { font-size: 12px; color: #666; margin-top: 8px; }
     .area-section { margin-bottom: 36px; }
     .area-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; font-size: 15px; font-weight: 600; color: #ccc; }
@@ -70,154 +65,179 @@
     .area-overflow { overflow: hidden; transition: height 0.35s ease; }
     .show-more-btn { margin-top: 14px; width: 100%; padding: 9px 0; background: none; border: 1px solid #2a2d36; border-radius: 8px; color: #666; font-size: 13px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
     .show-more-btn:hover { border-color: #444; color: #ccc; }
+    .lang-toggle { display: flex; align-items: center; border: 1px solid #2a2d36; border-radius: 8px; padding: 2px; gap: 2px; }
+    .lang-btn { padding: 5px 11px; border-radius: 6px; border: none; background: none; color: #555; cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; transition: all 0.2s; }
+    .lang-btn:hover { color: #ccc; }
+    .lang-btn-active { background: #fff; color: #000; }
 
     /* Detail overlay */
-    .detail-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:200; overflow-y:auto; }
-    .detail-panel { max-width:700px; margin:40px auto 60px; background:#1a1d26; border:1px solid #2a2d36; border-radius:16px; padding:36px; position:relative; }
-    .detail-close { position:absolute; top:14px; right:18px; background:none; border:none; color:#555; font-size:26px; cursor:pointer; line-height:1; padding:4px 8px; }
-    .detail-close:hover { color:#fff; }
-    .detail-name { font-size:26px; font-weight:700; }
-    .detail-section { margin-top:28px; }
-    .detail-section-title { font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #222; padding-bottom:8px; margin-bottom:14px; }
-    .detail-grades { display:flex; gap:12px; margin:14px 0; flex-wrap:wrap; }
-    .detail-grade-block { background:#222; border-radius:8px; padding:10px 18px; text-align:center; min-width:72px; }
-    .detail-grade-label { font-size:10px; color:#555; text-transform:uppercase; letter-spacing:0.5px; }
-    .detail-grade-value { font-size:22px; font-weight:700; color:#f59e0b; display:block; margin-top:3px; }
-    .detail-meta-row { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0; }
-    .detail-meta-item { font-size:12px; color:#666; background:#222; padding:8px 12px; border-radius:6px; }
-    .detail-meta-item .val { color:#fff; display:block; font-size:15px; font-weight:600; margin-bottom:1px; }
-    .detail-desc { font-size:14px; color:#aaa; line-height:1.7; margin-top:12px; }
-    .conditions-list { display:flex; flex-direction:column; gap:10px; }
-    .condition-item { background:#222; border-radius:8px; padding:12px 16px; }
-    .condition-item .cond-status { font-weight:600; font-size:13px; }
-    .condition-item .cond-notes { font-size:13px; color:#999; margin-top:5px; }
-    .condition-item .cond-meta { font-size:11px; color:#555; margin-top:6px; }
-    .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:4px; }
-    .photo-item { border-radius:8px; overflow:hidden; background:#222; }
-    .photo-item img { width:100%; aspect-ratio:1; object-fit:cover; display:block; }
-    .photo-caption { font-size:11px; color:#666; padding:4px 6px; }
-    .upload-area { border:2px dashed #333; border-radius:8px; padding:20px; text-align:center; cursor:pointer; transition:border-color 0.2s; margin-top:4px; }
-    .upload-area:hover { border-color:#555; }
-    .upload-area input[type=file] { display:none; }
-    .detail-inline-form { background:#222; border-radius:8px; padding:16px; margin-top:12px; }
-    .lang-toggle { display:flex; align-items:center; border:1px solid #2a2d36; border-radius:8px; padding:2px; gap:2px; }
-    .lang-btn { padding:5px 11px; border-radius:6px; border:none; background:none; color:#555; cursor:pointer; font-size:12px; font-weight:700; letter-spacing:0.5px; transition:all 0.2s; }
-    .lang-btn:hover { color:#ccc; }
-    .lang-btn-active { background:#fff; color:#000; }
-    .primary-nav { display:flex; gap:6px; padding:20px 40px 0; border-bottom:1px solid #2a2d36; background:#0f1117; }
-    .primary-nav-btn { padding:9px 22px; border-radius:8px 8px 0 0; border:1px solid transparent; border-bottom:none; background:none; color:#555; cursor:pointer; font-size:14px; font-weight:600; transition:all 0.2s; letter-spacing:0.1px; position:relative; bottom:-1px; }
-    .primary-nav-btn:hover:not(.active) { color:#aaa; }
-    .primary-nav-btn.active { background:#1a1d26; color:#fff; border-color:#2a2d36; border-bottom-color:#1a1d26; }
-    .coming-soon-msg { color:#555; padding:100px 40px; text-align:center; font-size:16px; font-style:italic; letter-spacing:0.3px; }
-
-    /* Map view */
-    #map-view { display:none; }
-    #map-container { height: calc(100vh - 160px); min-height: 400px; border-radius: 12px; overflow: hidden; border: 1px solid #2a2d36; }
-    .map-filters { display:flex; gap:10px; padding: 16px 40px 12px; align-items:center; flex-wrap:wrap; }
-    .map-filter-btn { padding:5px 14px; border-radius:20px; border:1px solid #333; background:none; color:#aaa; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s; }
-    .map-filter-btn.active { color:#000; border-color:transparent; }
-    .map-filter-btn.filter-peak.active  { background:#4ade80; }
-    .map-filter-btn.filter-crag.active  { background:#f97316; }
-    .map-filter-btn.filter-hill.active  { background:#2dd4bf; }
-    .map-filter-btn:hover:not(.active) { border-color:#555; color:#fff; }
-    .map-count { font-size:12px; color:#555; margin-left:auto; }
-
-    /* Leaflet dark popup */
-    .leaflet-popup-content-wrapper { background:#1a1d26; border:1px solid #2a2d36; border-radius:10px; color:#fff; box-shadow:0 4px 24px rgba(0,0,0,0.6); }
-    .leaflet-popup-tip { background:#1a1d26; }
-    .leaflet-popup-close-button { color:#555 !important; }
-    .leaflet-popup-close-button:hover { color:#fff !important; }
-    .map-popup-name { font-size:15px; font-weight:600; margin-bottom:4px; }
-    .map-popup-meta { font-size:12px; color:#888; margin-bottom:10px; }
-    .map-popup-btn { display:block; width:100%; padding:7px 0; border-radius:6px; border:none; background:#fff; color:#000; font-size:12px; font-weight:600; cursor:pointer; }
-    .map-popup-btn:hover { background:#ddd; }
-    /* Map tooltip (hover) */
-    .leaflet-tooltip { background:#111318; border:1px solid #2a2d36; color:#fff; border-radius:6px; padding:6px 10px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,0.5); white-space:nowrap; }
-    .leaflet-tooltip-top:before { border-top-color:#2a2d36; }
-    .map-tooltip-name { font-weight:600; font-size:13px; }
-    .map-tooltip-meta { font-size:11px; color:#aaa; margin-top:1px; }
-    /* Enhanced click popup */
-    .map-popup-desc { font-size:12px; color:#aaa; margin-bottom:8px; line-height:1.4; }
-    .map-popup-counts { display:flex; gap:14px; margin-bottom:10px; font-size:12px; color:#ccc; }
-    /* Weather widget */
-    .weather-widget { background:#0d0f18; border:1px solid #1e2130; border-radius:12px; padding:16px 20px; }
-    .weather-top { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
-    .weather-emoji { font-size:40px; line-height:1; flex-shrink:0; }
-    .weather-temp { font-size:30px; font-weight:700; line-height:1; }
-    .weather-condition-label { font-size:13px; color:#888; margin-top:4px; }
-    .weather-wind { text-align:right; margin-left:auto; }
-    .weather-wind-label { font-size:10px; color:#555; text-transform:uppercase; letter-spacing:0.5px; }
-    .weather-wind-val { font-size:18px; font-weight:600; margin-top:2px; }
-    .weather-meta-row { display:flex; align-items:center; gap:6px; margin-bottom:10px; font-size:13px; }
-    .weather-meta-label { color:#555; }
-    .weather-meta-val { color:#ccc; font-weight:600; }
-    .weather-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:4px; padding-top:10px; border-top:1px solid #1e2130; }
-    .weather-source-badge { font-size:11px; font-weight:700; letter-spacing:0.4px; padding:3px 9px; border-radius:20px; background:#1a2a1a; color:#4ade80; }
-    .weather-source-badge.source-openmeteo { background:#1a1f2e; color:#60a5fa; }
-    .weather-updated { font-size:11px; color:#444; }
-    .weather-unavail { color:#444; font-size:13px; font-style:italic; padding:10px 0; }
+    .detail-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; overflow-y: auto; }
+    .detail-panel { max-width: 700px; margin: 40px auto 60px; background: #1a1d26; border: 1px solid #2a2d36; border-radius: 16px; padding: 36px; position: relative; }
+    .detail-close { position: absolute; top: 14px; right: 18px; background: none; border: none; color: #555; font-size: 26px; cursor: pointer; line-height: 1; padding: 4px 8px; }
+    .detail-close:hover { color: #fff; }
+    .detail-name { font-size: 26px; font-weight: 700; }
+    .detail-section { margin-top: 28px; }
+    .detail-section-title { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #222; padding-bottom: 8px; margin-bottom: 14px; }
+    .detail-grades { display: flex; gap: 12px; margin: 14px 0; flex-wrap: wrap; }
+    .detail-grade-block { background: #222; border-radius: 8px; padding: 10px 18px; text-align: center; min-width: 72px; }
+    .detail-grade-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+    .detail-grade-value { font-size: 22px; font-weight: 700; color: #f59e0b; display: block; margin-top: 3px; }
+    .detail-meta-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+    .detail-meta-item { font-size: 12px; color: #666; background: #222; padding: 8px 12px; border-radius: 6px; }
+    .detail-meta-item .val { color: #fff; display: block; font-size: 15px; font-weight: 600; margin-bottom: 1px; }
+    .detail-desc { font-size: 14px; color: #aaa; line-height: 1.7; margin-top: 12px; }
+    .conditions-list { display: flex; flex-direction: column; gap: 10px; }
+    .condition-item { background: #222; border-radius: 8px; padding: 12px 16px; }
+    .condition-item .cond-status { font-weight: 600; font-size: 13px; }
+    .condition-item .cond-notes { font-size: 13px; color: #999; margin-top: 5px; }
+    .condition-item .cond-meta { font-size: 11px; color: #555; margin-top: 6px; }
+    .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 4px; }
+    .photo-item { border-radius: 8px; overflow: hidden; background: #222; }
+    .photo-item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+    .photo-caption { font-size: 11px; color: #666; padding: 4px 6px; }
+    .upload-area { border: 2px dashed #333; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s; margin-top: 4px; }
+    .upload-area:hover { border-color: #555; }
+    .upload-area input[type=file] { display: none; }
+    .detail-inline-form { background: #222; border-radius: 8px; padding: 16px; margin-top: 12px; }
 
     /* Tick button */
-    .tick-btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; border-radius:8px; border:1px solid #333; background:none; color:#aaa; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.2s; margin-top:4px; }
-    .tick-btn:hover:not(.ticked) { border-color:#4ade80; color:#4ade80; }
-    .tick-btn.ticked { background:#1a3a2a; border-color:#4ade80; color:#4ade80; }
-    .tick-btn .tick-icon { font-size:16px; line-height:1; }
-    .tick-form { background:#222; border-radius:8px; padding:14px; margin-top:10px; display:none; }
-    .tick-form label { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px; margin-top:10px; }
-    .tick-form label:first-child { margin-top:0; }
+    .tick-btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 8px; border: 1px solid #333; background: none; color: #aaa; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; margin-top: 4px; }
+    .tick-btn:hover:not(.ticked) { border-color: #4ade80; color: #4ade80; }
+    .tick-btn.ticked { background: #1a3a2a; border-color: #4ade80; color: #4ade80; }
+    .tick-btn .tick-icon { font-size: 16px; line-height: 1; }
+    .tick-form { background: #222; border-radius: 8px; padding: 14px; margin-top: 10px; display: none; }
+    .tick-form label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; margin-top: 10px; }
+    .tick-form label:first-child { margin-top: 0; }
 
-    /* My Ascents overlay */
-    .ascents-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:300; overflow-y:auto; }
-    .ascents-panel { max-width:680px; margin:40px auto 60px; background:#1a1d26; border:1px solid #2a2d36; border-radius:16px; padding:36px; position:relative; }
-    .ascents-close { position:absolute; top:14px; right:18px; background:none; border:none; color:#555; font-size:26px; cursor:pointer; line-height:1; padding:4px 8px; }
-    .ascents-close:hover { color:#fff; }
-    .ascents-title { font-size:22px; font-weight:700; margin-bottom:6px; }
-    .ascents-subtitle { font-size:13px; color:#555; margin-bottom:24px; }
-    .ascents-section-title { font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #222; padding-bottom:8px; margin:20px 0 12px; }
-    .ascent-item { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid #1e2130; }
-    .ascent-item:last-child { border-bottom:none; }
-    .ascent-name { font-size:14px; font-weight:600; }
-    .ascent-meta { font-size:12px; color:#666; margin-top:3px; }
-    .ascent-notes { font-size:12px; color:#888; margin-top:4px; font-style:italic; }
-    .ascent-remove { background:none; border:none; color:#444; cursor:pointer; font-size:18px; padding:2px 6px; line-height:1; flex-shrink:0; transition:color 0.15s; }
-    .ascent-remove:hover { color:#f87171; }
-    .ascents-empty { color:#555; font-size:14px; padding:20px 0; }
+    /* Ascents overlay */
+    .ascents-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 300; overflow-y: auto; }
+    .ascents-panel { max-width: 680px; margin: 40px auto 60px; background: #1a1d26; border: 1px solid #2a2d36; border-radius: 16px; padding: 36px; position: relative; }
+    .ascents-close { position: absolute; top: 14px; right: 18px; background: none; border: none; color: #555; font-size: 26px; cursor: pointer; line-height: 1; padding: 4px 8px; }
+    .ascents-close:hover { color: #fff; }
+    .ascents-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .ascents-subtitle { font-size: 13px; color: #555; margin-bottom: 24px; }
+    .ascents-section-title { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #222; padding-bottom: 8px; margin: 20px 0 12px; }
+    .ascent-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1e2130; }
+    .ascent-item:last-child { border-bottom: none; }
+    .ascent-name { font-size: 14px; font-weight: 600; }
+    .ascent-meta { font-size: 12px; color: #666; margin-top: 3px; }
+    .ascent-notes { font-size: 12px; color: #888; margin-top: 4px; font-style: italic; }
+    .ascent-remove { background: none; border: none; color: #444; cursor: pointer; font-size: 18px; padding: 2px 6px; line-height: 1; flex-shrink: 0; transition: color 0.15s; }
+    .ascent-remove:hover { color: #f87171; }
+    .ascents-empty { color: #555; font-size: 14px; padding: 20px 0; }
+
+    /* Weather widget */
+    .weather-widget { background: #0d0f18; border: 1px solid #1e2130; border-radius: 12px; padding: 16px 20px; }
+    .weather-top { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+    .weather-emoji { font-size: 40px; line-height: 1; flex-shrink: 0; }
+    .weather-temp { font-size: 30px; font-weight: 700; line-height: 1; }
+    .weather-condition-label { font-size: 13px; color: #888; margin-top: 4px; }
+    .weather-wind { text-align: right; margin-left: auto; }
+    .weather-wind-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+    .weather-wind-val { font-size: 18px; font-weight: 600; margin-top: 2px; }
+    .weather-meta-row { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; font-size: 13px; }
+    .weather-meta-label { color: #555; }
+    .weather-meta-val { color: #ccc; font-weight: 600; }
+    .weather-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 4px; padding-top: 10px; border-top: 1px solid #1e2130; }
+    .weather-source-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.4px; padding: 3px 9px; border-radius: 20px; background: #1a2a1a; color: #4ade80; }
+    .weather-source-badge.source-openmeteo { background: #1a1f2e; color: #60a5fa; }
+    .weather-updated { font-size: 11px; color: #444; }
+    .weather-unavail { color: #444; font-size: 13px; font-style: italic; padding: 10px 0; }
+
+    /* Map */
+    #map-page { display: none; }
+    #map-container { height: calc(100vh - 160px); min-height: 400px; border-radius: 12px; overflow: hidden; border: 1px solid #2a2d36; }
+    .map-filters { display: flex; gap: 10px; padding: 16px 40px 12px; align-items: center; flex-wrap: wrap; }
+    .map-filter-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid #333; background: none; color: #aaa; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+    .map-filter-btn.active { color: #000; border-color: transparent; }
+    .map-filter-btn.filter-peak.active { background: #4ade80; }
+    .map-filter-btn.filter-crag.active { background: #f97316; }
+    .map-filter-btn.filter-hill.active { background: #2dd4bf; }
+    .map-filter-btn:hover:not(.active) { border-color: #555; color: #fff; }
+    .map-count { font-size: 12px; color: #555; margin-left: auto; }
+    .leaflet-popup-content-wrapper { background: #1a1d26; border: 1px solid #2a2d36; border-radius: 10px; color: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.6); }
+    .leaflet-popup-tip { background: #1a1d26; }
+    .leaflet-popup-close-button { color: #555 !important; }
+    .leaflet-popup-close-button:hover { color: #fff !important; }
+    .map-popup-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .map-popup-meta { font-size: 12px; color: #888; margin-bottom: 10px; }
+    .map-popup-desc { font-size: 12px; color: #aaa; margin-bottom: 8px; line-height: 1.4; }
+    .map-popup-counts { display: flex; gap: 14px; margin-bottom: 10px; font-size: 12px; color: #ccc; }
+    .map-popup-btn { display: block; width: 100%; padding: 7px 0; border-radius: 6px; border: none; background: #fff; color: #000; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .map-popup-btn:hover { background: #ddd; }
+    .leaflet-tooltip { background: #111318; border: 1px solid #2a2d36; color: #fff; border-radius: 6px; padding: 6px 10px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); white-space: nowrap; }
+    .map-tooltip-name { font-weight: 600; font-size: 13px; }
+    .map-tooltip-meta { font-size: 11px; color: #aaa; margin-top: 1px; }
+
+    /* Navigation */
+    .main-nav { display: flex; gap: 4px; padding: 0 40px; border-bottom: 1px solid #2a2d36; background: #0f1117; flex-wrap: wrap; }
+    .nav-btn { padding: 10px 18px; border-radius: 8px 8px 0 0; border: 1px solid transparent; border-bottom: none; background: none; color: #555; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; position: relative; bottom: -1px; }
+    .nav-btn:hover:not(.active) { color: #aaa; }
+    .nav-btn.active { background: #1a1d26; color: #fff; border-color: #2a2d36; border-bottom-color: #1a1d26; }
+
+    /* Hero */
+    .hero { position: relative; min-height: 460px; background: #0f1117 url('/hero.jpg') center/cover no-repeat; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 20px; }
+    .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.35) 50%, rgba(15,17,23,0.95) 100%); }
+    .hero-content { position: relative; z-index: 1; width: 100%; max-width: 680px; }
+    .hero-tagline { font-size: 18px; color: rgba(255,255,255,0.75); margin: 14px 0 28px; letter-spacing: 0.3px; }
+    .hero-search { width: 100%; max-width: 440px; padding: 13px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(15,17,23,0.8); color: #fff; font-size: 15px; outline: none; backdrop-filter: blur(8px); }
+    .hero-search:focus { border-color: rgba(74,222,128,0.5); }
+    .hero-search::placeholder { color: rgba(255,255,255,0.45); }
+
+    /* Home area cards */
+    .home-section { padding: 36px 40px; }
+    .home-section-title { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; }
+    .area-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .area-card { background: #1a1d26; border: 1px solid #2a2d36; border-radius: 14px; padding: 24px; cursor: pointer; transition: all 0.2s; }
+    .area-card:hover { border-color: #4ade80; transform: translateY(-3px); }
+    .area-card-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .area-card-meta { font-size: 13px; color: #4ade80; }
+    .area-card-region { font-size: 12px; color: #555; margin-top: 4px; }
+    .area-card-link { margin-top: 16px; font-size: 13px; color: #4ade80; }
+
+    /* Page layouts */
+    .breadcrumb { font-size: 13px; color: #555; margin-bottom: 16px; }
+    .breadcrumb a { color: #4ade80; text-decoration: none; cursor: pointer; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .summit-detail { max-width: 900px; margin: 0 auto; padding: 32px 40px 60px; }
+    .summit-detail-name { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+    .summit-detail-meta { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
   </style>
 </head>
 <body>
+
   <header>
-    <a href="/" class="logo">
-      <svg viewBox="0 0 180 170" width="120" height="70" xmlns="http://www.w3.org/2000/svg" aria-label="Na Vrh — To The Summit" role="img">
+    <div class="logo" onclick="navigate('/')">
+      <svg viewBox="0 0 180 170" width="110" height="64" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="logoGreen" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stop-color="#4ade80"/>
             <stop offset="100%" stop-color="#22d3ee"/>
           </linearGradient>
         </defs>
-        <path d="M15 108 L90 22 L165 108" fill="none" stroke="url(#logoGreen)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M0 108 L40 72 L70 108" fill="none" stroke="url(#logoGreen)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/>
-        <path d="M110 108 L140 72 L180 108" fill="none" stroke="url(#logoGreen)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/>
-        <line x1="0" y1="108" x2="180" y2="108" stroke="url(#logoGreen)" stroke-width="1" opacity="0.25"/>
-        <circle cx="90" cy="22" r="7" fill="none" stroke="url(#logoGreen)" stroke-width="1" opacity="0.3"/>
+        <path d="M15 108 L90 22 L165 108" fill="none" stroke="url(#lg)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M0 108 L40 72 L70 108" fill="none" stroke="url(#lg)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/>
+        <path d="M110 108 L140 72 L180 108" fill="none" stroke="url(#lg)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/>
+        <line x1="0" y1="108" x2="180" y2="108" stroke="url(#lg)" stroke-width="1" opacity="0.25"/>
         <circle cx="90" cy="22" r="3.5" fill="#4ade80"/>
         <text x="90" y="140" text-anchor="middle" font-size="30" font-weight="800" fill="#ffffff" font-family="system-ui" letter-spacing="8">VRH</text>
         <text x="90" y="158" text-anchor="middle" font-size="9" fill="#4ade80" font-family="system-ui" letter-spacing="4">SLOVENIA OUTDOOR</text>
       </svg>
-    </a>
+    </div>
     <div style="display:flex;gap:12px;align-items:center">
-      <input class="search-bar" type="text" id="search" data-i18n="searchPlaceholder" placeholder="Search summits, routes, trails..." oninput="handleSearch()">
+      <input class="search-bar" type="text" id="search" placeholder="Search summits, routes, trails..." oninput="handleSearch()">
       <div class="lang-toggle">
         <button id="btn-lang-en" class="lang-btn lang-btn-active" onclick="setLang('en')">EN</button>
         <button id="btn-lang-sl" class="lang-btn" onclick="setLang('sl')">SL</button>
       </div>
       <div id="auth-buttons" style="display:flex;gap:8px">
-        <button class="auth-btn" data-i18n="login" onclick="showModal('login')">Log in</button>
-        <button class="auth-btn primary" data-i18n="signup" onclick="showModal('register')">Sign up</button>
+        <button class="auth-btn" onclick="showModal('login')">Log in</button>
+        <button class="auth-btn primary" onclick="showModal('register')">Sign up</button>
       </div>
       <div id="user-menu" style="display:none;align-items:center;gap:8px">
         <span id="username-display" style="font-size:14px;color:#aaa"></span>
         <button class="auth-btn" onclick="openAscents()">My Ascents</button>
-        <button class="auth-btn" data-i18n="logout" onclick="logout()">Log out</button>
+        <button class="auth-btn" onclick="logout()">Log out</button>
       </div>
     </div>
   </header>
@@ -227,18 +247,16 @@
     <div style="background:#1a1d26;border:1px solid #333;border-radius:16px;padding:32px;width:360px;">
       <h2 id="modal-title" style="margin-bottom:20px;font-size:20px"></h2>
       <div id="modal-error" style="display:none;color:#f87171;font-size:13px;margin-bottom:12px;"></div>
-      <div id="register-fields">
-        <input class="form-input" type="text" id="reg-username" placeholder="Username">
-      </div>
+      <div id="register-fields"><input class="form-input" type="text" id="reg-username" placeholder="Username"></div>
       <input class="form-input" type="email" id="auth-email" placeholder="Email">
       <input class="form-input" type="password" id="auth-password" placeholder="Password">
-      <button class="auth-btn primary full" id="modal-submit" onclick="submitAuth()">Submit</button>
+      <button class="auth-btn primary full" onclick="submitAuth()">Submit</button>
       <button class="auth-btn full" onclick="closeModal()" style="margin-top:8px">Cancel</button>
     </div>
   </div>
 
-  <!-- My Ascents overlay -->
-  <div id="ascents-overlay" class="ascents-overlay" onclick="handleAscentsOverlayClick(event)">
+  <!-- Ascents overlay -->
+  <div id="ascents-overlay" class="ascents-overlay" onclick="if(event.target===this)closeAscents()">
     <div class="ascents-panel">
       <button class="ascents-close" onclick="closeAscents()">&#x2715;</button>
       <div class="ascents-title">My Ascents</div>
@@ -247,56 +265,591 @@
     </div>
   </div>
 
-  <!-- Detail overlay -->
-  <div id="detail-overlay" class="detail-overlay" onclick="handleDetailOverlayClick(event)">
+  <!-- Detail overlay (climbing routes) -->
+  <div id="detail-overlay" class="detail-overlay" onclick="if(event.target===this)closeDetail()">
     <div class="detail-panel">
       <button class="detail-close" onclick="closeDetail()">&#x2715;</button>
       <div id="detail-content"><div class="loading">Loading...</div></div>
     </div>
   </div>
 
-  <div class="primary-nav">
-    <button class="primary-nav-btn active" data-cat="hiking"       onclick="showCategory('hiking')">Hiking</button>
-    <button class="primary-nav-btn"        data-cat="climbing"     onclick="showCategory('climbing')">Climbing</button>
-    <button class="primary-nav-btn"        data-cat="trail_running" onclick="showCategory('trail_running')">Trail Running</button>
-    <button class="primary-nav-btn"        data-cat="cycling"      onclick="showCategory('cycling')">Cycling</button>
-    <button class="primary-nav-btn"        data-cat="map"          onclick="showCategory('map')" data-i18n="catMap">Map</button>
-  </div>
-  <div class="tabs" id="sub-tabs">
-    <button class="tab active" data-tab="summits"    onclick="showTab('summits', this)">Summits</button>
-    <button class="tab"        data-tab="hills"      onclick="showTab('hills', this)">Hills</button>
-    <button class="tab"        data-tab="trails"     onclick="showTab('trails', this)">Trails</button>
-    <button class="tab"        data-tab="conditions" onclick="showTab('conditions', this)">Conditions</button>
+  <!-- Navigation -->
+  <nav class="main-nav" id="main-nav">
+    <button class="nav-btn" data-path="/" onclick="navigate('/')">Home</button>
+    <button class="nav-btn" data-path="/summits" onclick="navigate('/summits')">Summits</button>
+    <button class="nav-btn" data-path="/hills" onclick="navigate('/hills')">Hills</button>
+    <button class="nav-btn" data-path="/climbing" onclick="navigate('/climbing')">Climbing</button>
+    <button class="nav-btn" data-path="/trails" onclick="navigate('/trails')">Trails</button>
+    <button class="nav-btn" data-path="/conditions" onclick="navigate('/conditions')">Conditions</button>
+    <button class="nav-btn" data-path="/map" onclick="navigate('/map')">Map</button>
+  </nav>
+
+  <!-- Router output -->
+  <main id="app"></main>
+
+  <!-- Map (outside router so Leaflet instance persists) -->
+  <div id="map-page">
+    <div class="map-filters">
+      <button class="map-filter-btn filter-peak active" onclick="toggleMapFilter('peak')" id="mf-peak">Peaks</button>
+      <button class="map-filter-btn filter-crag active" onclick="toggleMapFilter('crag')" id="mf-crag">Crags</button>
+      <button class="map-filter-btn filter-hill active" onclick="toggleMapFilter('hill')" id="mf-hill">Hills</button>
+      <span class="map-count" id="map-count"></span>
+    </div>
+    <div style="padding:0 40px 40px"><div id="map-container"></div></div>
   </div>
 
-  <div class="container">
-    <div id="summits-view">
-      <div class="stats" id="summit-stats"></div>
-      <p class="section-title" data-i18n="sectionSummits">Summits &amp; crags</p>
-      <div id="summits-grid"><div class="loading">Loading summits...</div></div>
-    </div>
-    <div id="hills-view" style="display:none">
-      <div class="stats" id="hills-stats"></div>
-      <p class="section-title" data-i18n="sectionHills">Hills &amp; lower peaks</p>
-      <div id="hills-grid"><div class="loading">Loading hills...</div></div>
-    </div>
-    <div id="climbing-view" style="display:none">
-      <div class="stats" id="climbing-stats"></div>
-      <p class="section-title" data-i18n="sectionClimbing">Climbing routes</p>
-      <div class="grid" id="climbing-grid"><div class="loading">Loading routes...</div></div>
-    </div>
-    <div id="trails-view" style="display:none">
-      <div class="stats" id="trail-stats"></div>
-      <p class="section-title" data-i18n="sectionTrails">Hiking &amp; running trails</p>
-      <div class="grid" id="trails-grid"><div class="loading">Loading trails...</div></div>
-    </div>
-    <div id="conditions-view" style="display:none">
-      <div class="stats" id="conditions-stats"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <p class="section-title" data-i18n="sectionConditions">Recent conditions reports</p>
-        <button class="auth-btn primary" data-i18n="addReport" onclick="showConditionsForm()" id="report-btn">+ Add report</button>
+<script>
+const API = '/api';
+let allSummits = [], allHills = [], allClimbing = [], allTrails = [];
+let dataLoaded = false, dataLoadPromise = null;
+let currentUser = null, authMode = 'login';
+let myTicks = { summits: {}, trails: {}, routes: {} };
+let detailType = null, detailId = null;
+let leafletMap = null, mapMarkers = [], mapFilters = { peak: true, crag: true, hill: true };
+
+// ── Slug utility ──────────────────────────────────────────────
+function toSlug(name) {
+  if (!name) return '';
+  return name.toLowerCase()
+    .replace(/č/g,'c').replace(/š/g,'s').replace(/ž/g,'z').replace(/đ/g,'d')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+
+// ── i18n ──────────────────────────────────────────────────────
+const TRANSLATIONS = {
+  en: {
+    navHome:'Home', navSummits:'Summits', navHills:'Hills', navClimbing:'Climbing',
+    navTrails:'Trails', navConditions:'Conditions', navMap:'Map',
+    sectionSummits:'Summits & crags', sectionHills:'Hills & lower peaks',
+    sectionClimbing:'Climbing routes', sectionTrails:'Hiking & running trails',
+    sectionConditions:'Recent conditions reports',
+    searchPlaceholder:'Search summits, routes, trails...',
+    login:'Log in', signup:'Sign up', logout:'Log out',
+    addReport:'+ Add report', showLess:'Show less',
+    noConditions:'No conditions reports yet — be the first!',
+    statusGood:'Good conditions', statusFair:'Fair conditions',
+    statusPoor:'Poor conditions', statusClosed:'Closed / dangerous',
+    loginTitle:'Log in', registerTitle:'Create account',
+    difficulty:{ hard:'hard', medium:'medium', easy:'easy' },
+    activityType:{ hiking:'hiking', sport:'sport', alpine:'alpine', trail_running:'trail_running', cycling:'cycling', trad:'trad', via_ferrata:'via ferrata' },
+    noSummitsFound:'No summits found', noHillsFound:'No hills found',
+    noRoutesFound:'No routes found', noTrailsFound:'No trails found',
+    bolts:'bolts', heroTagline:'Odkrijte Slovenijo / Discover Slovenia',
+    mountainRanges:'Mountain Ranges', viewArea:'View area →', summitsIn:'summits',
+    loading:'Loading...', notFound:'Page not found',
+    backToSummits:'← Back to summits', backToClimbing:'← Back to climbing', backToTrails:'← Back to trails',
+    weather:'Weather', elevation:'Elevation', area:'Area',
+    trails:'Trails', climbingRoutes:'Climbing Routes', conditions:'Conditions',
+    photos:'Photos', uploadPhoto:'Click to upload a photo', myList:'My List',
+    noPhotos:'No photos yet.', noRoutes:'No climbing routes yet.',
+    noTrailsForSummit:'No trails for this summit yet.', noConditionsForItem:'No conditions reports yet.',
+    distance:'Distance', gain:'Gain', type:'Type', length:'Length', rock:'Rock',
+  },
+  sl: {
+    navHome:'Domov', navSummits:'Vrhovi', navHills:'Hribi', navClimbing:'Plezanje',
+    navTrails:'Poti', navConditions:'Razmere', navMap:'Zemljevid',
+    sectionSummits:'Vsi vrhovi', sectionHills:'Hribi in nižji vrhovi',
+    sectionClimbing:'Plezalne smeri', sectionTrails:'Pohodniške in tekaške poti',
+    sectionConditions:'Zadnja poročila o razmerah',
+    searchPlaceholder:'Išči vrhove, smeri, poti...',
+    login:'Prijava', signup:'Registracija', logout:'Odjava',
+    addReport:'+ Dodaj poročilo', showLess:'Pokaži manj',
+    noConditions:'Še ni poročil — bodi prvi!',
+    statusGood:'Dobre razmere', statusFair:'Srednje razmere',
+    statusPoor:'Slabe razmere', statusClosed:'Zaprto / nevarno',
+    loginTitle:'Prijava', registerTitle:'Ustvari račun',
+    difficulty:{ hard:'zahtevno', medium:'srednje', easy:'lahko' },
+    activityType:{ hiking:'pohodništvo', sport:'športno plezanje', alpine:'alpinizem', trail_running:'tek v naravi', cycling:'kolesarjenje', trad:'trad', via_ferrata:'via ferrata' },
+    noSummitsFound:'Ni najdenih vrhov', noHillsFound:'Ni najdenih hribov',
+    noRoutesFound:'Ni najdenih smeri', noTrailsFound:'Ni najdenih poti',
+    bolts:'svedrov', heroTagline:'Odkrijte Slovenijo / Discover Slovenia',
+    mountainRanges:'Pogorja', viewArea:'Poglej območje →', summitsIn:'vrhov',
+    loading:'Nalaganje...', notFound:'Stran ni najdena',
+    backToSummits:'← Nazaj na vrhove', backToClimbing:'← Nazaj na plezanje', backToTrails:'← Nazaj na poti',
+    weather:'Vreme', elevation:'Višina', area:'Območje',
+    trails:'Poti', climbingRoutes:'Plezalne smeri', conditions:'Razmere',
+    photos:'Slike', uploadPhoto:'Klikni za nalaganje slike', myList:'Moj seznam',
+    noPhotos:'Še ni slik.', noRoutes:'Še ni plezalnih smeri.',
+    noTrailsForSummit:'Še ni poti za ta vrh.', noConditionsForItem:'Še ni poročil o razmerah.',
+    distance:'Razdalja', gain:'Vzpon', type:'Tip', length:'Dolžina', rock:'Kamnina',
+  }
+};
+
+let lang = localStorage.getItem('vrh_lang') || 'en';
+function t(k) { return (TRANSLATIONS[lang]||TRANSLATIONS.en)[k] || k; }
+function tShowMore(n) { return lang==='sl' ? `Pokaži več (${n} preostalih)` : `Show more (${n} remaining)`; }
+function desc(item) { return (lang==='sl' && item.description_sl) ? item.description_sl : (item.description||''); }
+function tDiff(d) { return (TRANSLATIONS[lang]||TRANSLATIONS.en).difficulty[d] || d; }
+function tAct(a) { return ((TRANSLATIONS[lang]||TRANSLATIONS.en).activityType||{})[a] || a; }
+function iname(item) { return (lang==='sl' && item.name_sl) ? item.name_sl : item.name; }
+
+const SUMMIT_DIFF = {
+  easy:      { en:'Easy',      sl:'Lahko',         cls:'diff-easy' },
+  moderate:  { en:'Moderate',  sl:'Srednje',       cls:'diff-moderate' },
+  demanding: { en:'Demanding', sl:'Zahtevno',      cls:'diff-demanding' },
+  very_hard: { en:'Very Hard', sl:'Zelo zahtevno', cls:'diff-very-hard' },
+};
+function diffBadge(s) {
+  if (s.type==='crag') return '';
+  let k = s.difficulty;
+  if (!k) { k = s.elevation_m>=2500?'very_hard':s.elevation_m>=1800?'demanding':s.elevation_m>=1200?'moderate':'easy'; }
+  const d = SUMMIT_DIFF[k]; if (!d) return '';
+  return `<span class="badge diff-badge ${d.cls}">${lang==='sl'?d.sl:d.en}</span>`;
+}
+
+function applyTranslations() {
+  const T = TRANSLATIONS[lang];
+  const navKeys = { '/':'navHome', '/summits':'navSummits', '/hills':'navHills', '/climbing':'navClimbing', '/trails':'navTrails', '/conditions':'navConditions', '/map':'navMap' };
+  document.querySelectorAll('.nav-btn[data-path]').forEach(btn => {
+    const k = navKeys[btn.dataset.path]; if (k && T[k]) btn.textContent = T[k];
+  });
+  document.getElementById('btn-lang-en').classList.toggle('lang-btn-active', lang==='en');
+  document.getElementById('btn-lang-sl').classList.toggle('lang-btn-active', lang==='sl');
+  document.getElementById('search').placeholder = T.searchPlaceholder || '';
+  const sel = document.getElementById('report-status');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = [['good',T.statusGood],['fair',T.statusFair],['poor',T.statusPoor],['closed',T.statusClosed]]
+      .map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+    sel.value = cur;
+  }
+}
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('vrh_lang', l);
+  applyTranslations();
+  route();
+}
+
+// ── Router ────────────────────────────────────────────────────
+function navigate(path) {
+  window.history.pushState(null, '', path);
+  route();
+}
+
+function updateNavActive() {
+  const path = window.location.pathname;
+  document.querySelectorAll('.nav-btn[data-path]').forEach(btn => {
+    const bp = btn.dataset.path;
+    const active = (bp==='/' && path==='/') || (bp!=='/' && path.startsWith(bp));
+    btn.classList.toggle('active', active);
+  });
+}
+
+function route() {
+  const path = window.location.pathname;
+  updateNavActive();
+  const mapPage = document.getElementById('map-page');
+  const app = document.getElementById('app');
+  if (path === '/map') {
+    mapPage.style.display = 'block'; app.style.display = 'none';
+    return renderMapPage();
+  }
+  mapPage.style.display = 'none'; app.style.display = 'block';
+
+  if (path === '/') return renderHomePage();
+  if (path === '/summits') return renderSummitsPage();
+  if (path === '/hills') return renderHillsPage();
+  if (path === '/climbing') return renderClimbingPage();
+  if (path === '/trails') return renderTrailsPage();
+  if (path === '/conditions') return renderConditionsPage();
+
+  let m;
+  if ((m = path.match(/^\/summit\/([^/]+)$/))) return renderSummitDetailPage(m[1]);
+  if ((m = path.match(/^\/summits\/([^/]+)$/))) return renderAreaPage(m[1]);
+  if ((m = path.match(/^\/climbing\/([^/]+)$/))) return renderClimbingCragPage(m[1]);
+  if ((m = path.match(/^\/trail\/([^/]+)$/))) return renderTrailDetailPage(m[1]);
+
+  app.innerHTML = `<div class="empty" style="padding:80px 40px">${t('notFound')}</div>`;
+}
+
+window.addEventListener('popstate', route);
+
+// ── Data loading ──────────────────────────────────────────────
+async function ensureDataLoaded() {
+  if (dataLoaded) return;
+  if (!dataLoadPromise) dataLoadPromise = loadAll();
+  await dataLoadPromise;
+}
+
+async function loadAll() {
+  const [sr, hr, cr, tr] = await Promise.all([
+    fetch(`${API}/summits?type=summits`),
+    fetch(`${API}/summits?type=hills`),
+    fetch(`${API}/climbing-routes`),
+    fetch(`${API}/trails`)
+  ]);
+  allSummits  = await sr.json();
+  allHills    = await hr.json();
+  allClimbing = await cr.json();
+  allTrails   = await tr.json();
+  dataLoaded = true;
+}
+
+// ── Card helpers ──────────────────────────────────────────────
+function summitCard(s) {
+  const dest = s.type==='crag' ? `/climbing/${toSlug(s.name)}` : `/summit/${toSlug(s.name)}`;
+  return `<div class="card" onclick="navigate('${dest}')">
+    <div class="card-header">
+      <div class="card-title">${iname(s)}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span class="badge badge-${s.type}">${s.type}</span>${diffBadge(s)}
       </div>
-      <div id="conditions-form" style="display:none;background:#1a1d26;border:1px solid #333;border-radius:12px;padding:20px;margin-bottom:20px;">
+    </div>
+    <div class="card-meta">${s.elevation_m?s.elevation_m+'m':''}</div>
+    ${desc(s)?`<div class="card-desc">${desc(s)}</div>`:''}
+  </div>`;
+}
+
+function trailCard(tr) {
+  return `<div class="card" onclick="navigate('/trail/${toSlug(tr.name)}')">
+    <div class="card-header">
+      <div class="card-title">${iname(tr)}</div>
+      <span class="badge badge-${tr.activity_type}">${tAct(tr.activity_type)}</span>
+    </div>
+    <div class="card-meta difficulty-${tr.difficulty}">${tDiff(tr.difficulty)}</div>
+    <div class="trail-stats">
+      ${tr.distance_km?`<span class="trail-stat">${tr.distance_km}km</span>`:''}
+      ${tr.elevation_gain_m?`<span class="trail-stat">+${tr.elevation_gain_m}m</span>`:''}
+    </div>
+    ${desc(tr)?`<div class="card-desc">${desc(tr)}</div>`:''}
+  </div>`;
+}
+
+function climbingCard(r) {
+  return `<div class="card" onclick="openDetail('climbing','${r.id}')">
+    <div class="card-header">
+      <div class="card-title">${iname(r)}</div>
+      <span class="badge badge-sport">${tAct(r.type)}</span>
+    </div>
+    <div class="grade">${r.grade_french||r.grade_alpine||''} <span>${r.grade_uiaa?'/ '+r.grade_uiaa:''}</span></div>
+    <div class="card-meta">${r.length_m?r.length_m+'m':''} ${r.num_bolts?'· '+r.num_bolts+' '+t('bolts'):''}</div>
+    ${desc(r)?`<div class="card-desc">${desc(r)}</div>`:''}
+  </div>`;
+}
+
+function areaGroupedHtml(summits, prefix, emptyMsg) {
+  if (!summits.length) return `<div class="empty">${emptyMsg||t('noSummitsFound')}</div>`;
+  const groups = {};
+  summits.forEach(s => { const a=s.area_name||'Other'; (groups[a]=groups[a]||[]).push(s); });
+  const LIMIT = 6;
+  return Object.entries(groups).map(([area, items]) => {
+    const aid = prefix+'-'+area.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    const vis = items.slice(0,LIMIT), hid = items.slice(LIMIT);
+    return `<div class="area-section">
+      <div class="area-header">${area}</div>
+      <div class="grid">${vis.map(summitCard).join('')}</div>
+      ${hid.length?`
+        <div class="area-overflow" id="overflow-${aid}" style="height:0" data-expanded="0">
+          <div class="grid" style="margin-top:14px">${hid.map(summitCard).join('')}</div>
+        </div>
+        <button class="show-more-btn" id="btn-${aid}" onclick="toggleAreaOverflow('${aid}',${hid.length})">${tShowMore(hid.length)}</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── Pages ─────────────────────────────────────────────────────
+
+async function renderHomePage() {
+  document.getElementById('app').innerHTML = `
+    <section class="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <svg viewBox="0 0 180 170" width="160" height="94" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#22d3ee"/>
+          </linearGradient></defs>
+          <path d="M15 108 L90 22 L165 108" fill="none" stroke="url(#hg)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0 108 L40 72 L70 108" fill="none" stroke="url(#hg)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/>
+          <path d="M110 108 L140 72 L180 108" fill="none" stroke="url(#hg)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/>
+          <line x1="0" y1="108" x2="180" y2="108" stroke="url(#hg)" stroke-width="1" opacity="0.25"/>
+          <circle cx="90" cy="22" r="3.5" fill="#4ade80"/>
+          <text x="90" y="140" text-anchor="middle" font-size="30" font-weight="800" fill="#fff" font-family="system-ui" letter-spacing="8">VRH</text>
+          <text x="90" y="158" text-anchor="middle" font-size="9" fill="#4ade80" font-family="system-ui" letter-spacing="4">SLOVENIA OUTDOOR</text>
+        </svg>
+        <div class="hero-tagline">${t('heroTagline')}</div>
+        <input class="hero-search" type="text" placeholder="${t('searchPlaceholder')}"
+          onkeydown="if(event.key==='Enter'){const q=this.value;navigate('/summits');setTimeout(()=>{const s=document.getElementById('search');if(s&&q){s.value=q;handleSearch();}},80);}">
+      </div>
+    </section>
+    <div class="home-section">
+      <p class="home-section-title">${t('mountainRanges')}</p>
+      <div class="area-cards" id="area-cards-grid"><div class="loading">${t('loading')}</div></div>
+    </div>`;
+  try {
+    const res = await fetch(`${API}/areas`);
+    const areas = await res.json();
+    const el = document.getElementById('area-cards-grid');
+    if (!el) return;
+    if (!areas.length) { el.innerHTML = '<div class="empty">No areas found.</div>'; return; }
+    el.innerHTML = areas.map(a=>`
+      <div class="area-card" onclick="navigate('/summits/${a.slug}')">
+        <div class="area-card-name">${a.name}</div>
+        <div class="area-card-meta">${a.summit_count||0} ${t('summitsIn')}</div>
+        ${a.region?`<div class="area-card-region">${a.region}</div>`:''}
+        <div class="area-card-link">${t('viewArea')}</div>
+      </div>`).join('');
+  } catch { const el=document.getElementById('area-cards-grid'); if(el) el.innerHTML='<div class="empty">Could not load areas.</div>'; }
+}
+
+async function renderSummitsPage() {
+  await ensureDataLoaded();
+  const q = (document.getElementById('search')?.value||'').toLowerCase();
+  const filtered = q ? allSummits.filter(s=>s.name.toLowerCase().includes(q)||(s.name_sl||'').toLowerCase().includes(q)) : allSummits;
+  document.getElementById('app').innerHTML = `
+    <div class="container">
+      <div class="stats">
+        <div class="stat"><strong>${filtered.length}</strong> total</div>
+        <div class="stat"><strong>${filtered.filter(s=>s.type==='peak').length}</strong> peaks</div>
+        <div class="stat"><strong>${filtered.filter(s=>s.type==='crag').length}</strong> crags</div>
+      </div>
+      <p class="section-title">${t('sectionSummits')}</p>
+      ${areaGroupedHtml(filtered,'s',t('noSummitsFound'))}
+    </div>`;
+}
+
+async function renderAreaPage(slug) {
+  document.getElementById('app').innerHTML = `<div class="loading" style="padding:60px 40px">${t('loading')}</div>`;
+  try {
+    const res = await fetch(`${API}/areas/${slug}`);
+    if (!res.ok) throw new Error();
+    const area = await res.json();
+    const summits = (area.summits||[]).map(s=>({...s,area_name:area.name,area_slug:slug}));
+    document.getElementById('app').innerHTML = `
+      <div class="container">
+        <div class="breadcrumb"><a onclick="navigate('/summits')">Summits</a> / ${area.name}</div>
+        <div style="margin-bottom:24px">
+          <div style="font-size:26px;font-weight:700">${area.name}</div>
+          ${area.region?`<div style="color:#666;font-size:14px;margin-top:4px">${area.region}</div>`:''}
+        </div>
+        <div class="stats"><div class="stat"><strong>${summits.length}</strong> ${t('summitsIn')}</div></div>
+        ${areaGroupedHtml(summits,'a',t('noSummitsFound'))}
+      </div>`;
+  } catch { document.getElementById('app').innerHTML=`<div class="empty" style="padding:80px 40px">${t('notFound')}</div>`; }
+}
+
+async function renderSummitDetailPage(slug) {
+  document.getElementById('app').innerHTML = `<div class="loading" style="padding:60px 40px">${t('loading')}</div>`;
+  await ensureDataLoaded();
+  let summit = [...allSummits,...allHills].find(s=>toSlug(s.name)===slug||toSlug(s.name_sl||'')===slug);
+  if (!summit) {
+    try { const r=await fetch(`${API}/summits/by-slug/${slug}`); if(r.ok) summit=await r.json(); } catch {}
+  }
+  if (!summit) { document.getElementById('app').innerHTML=`<div class="empty" style="padding:80px 40px">${t('notFound')}</div>`; return; }
+
+  const isCrag = summit.type==='crag';
+  const summitTrails  = allTrails.filter(tr=>tr.summit_id===summit.id);
+  const summitRoutes  = allClimbing.filter(r=>r.summit_id===summit.id);
+
+  let weather=null, conditions=[], photos=[];
+  try {
+    try { weather = await fetchWeather(summit); } catch {}
+    const photoRes = await fetch(`${API}/photos/summit/${summit.id}`).catch(()=>({ok:false}));
+    if (photoRes.ok) photos = await photoRes.json();
+    const condItems = summitTrails.length ? summitTrails : summitRoutes;
+    const condType  = summitTrails.length ? 'trail' : 'climbing';
+    if (condItems.length) {
+      const all = await Promise.all(condItems.slice(0,4).map(x=>fetch(`${API}/conditions/${condType}/${x.id}`).then(r=>r.ok?r.json():[]).catch(()=>[])));
+      conditions = all.flat().sort((a,b)=>new Date(b.reported_at)-new Date(a.reported_at)).slice(0,5);
+    }
+  } catch {}
+
+  const backPath = isCrag ? '/climbing' : '/summits';
+  document.getElementById('app').innerHTML = `
+    <div class="summit-detail">
+      <div class="breadcrumb">
+        <a onclick="navigate('${backPath}')">${isCrag?t('backToClimbing'):t('backToSummits')}</a>
+        ${summit.area_name?` / <a onclick="navigate('/summits/${summit.area_slug||toSlug(summit.area_name||'')}')">${summit.area_name}</a>`:''}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div class="summit-detail-name">${iname(summit)}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge badge-${summit.type}">${summit.type}</span>${diffBadge(summit)}
+        </div>
+      </div>
+      <div class="summit-detail-meta">
+        <div class="detail-meta-item"><span class="val">${summit.elevation_m}m</span>${t('elevation')}</div>
+        ${summit.area_name?`<div class="detail-meta-item"><span class="val">${summit.area_name}</span>${t('area')}</div>`:''}
+      </div>
+      ${buildTickSection({summitId:summit.id})}
+      <div class="detail-section">
+        <div class="detail-section-title">${t('weather')}</div>${buildWeatherHtml(weather)}
+      </div>
+      ${desc(summit)?`<div class="detail-desc" style="margin-top:20px">${desc(summit)}</div>`:''}
+      <div class="detail-section">
+        <div class="detail-section-title">${t('trails')} (${summitTrails.length})</div>
+        ${summitTrails.length?`<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">${summitTrails.map(trailCard).join('')}</div>`:`<p style="color:#555;font-size:13px">${t('noTrailsForSummit')}</p>`}
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">${t('climbingRoutes')} (${summitRoutes.length})</div>
+        ${summitRoutes.length?`<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">${summitRoutes.map(climbingCard).join('')}</div>`:`<p style="color:#555;font-size:13px">${t('noRoutes')}</p>`}
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">${t('conditions')}</div>
+        ${conditionsListHtml(conditions)}
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">${t('photos')}</div>
+        ${photosListHtml(photos)}
+      </div>
+    </div>`;
+}
+
+async function renderHillsPage() {
+  await ensureDataLoaded();
+  const q = (document.getElementById('search')?.value||'').toLowerCase();
+  const filtered = q ? allHills.filter(s=>s.name.toLowerCase().includes(q)) : allHills;
+  document.getElementById('app').innerHTML = `
+    <div class="container">
+      <div class="stats"><div class="stat"><strong>${filtered.length}</strong> total</div></div>
+      <p class="section-title">${t('sectionHills')}</p>
+      ${areaGroupedHtml(filtered,'h',t('noHillsFound'))}
+    </div>`;
+}
+
+async function renderClimbingPage() {
+  await ensureDataLoaded();
+  const q = (document.getElementById('search')?.value||'').toLowerCase();
+  const crags = [...allSummits,...allHills].filter(s=>s.type==='crag');
+  const fCrags  = q ? crags.filter(s=>s.name.toLowerCase().includes(q)) : crags;
+  const fRoutes = q ? allClimbing.filter(r=>r.name.toLowerCase().includes(q)||(r.grade_french||'').includes(q)) : allClimbing;
+  document.getElementById('app').innerHTML = `
+    <div class="container">
+      <div class="stats">
+        <div class="stat"><strong>${fRoutes.length}</strong> routes</div>
+        <div class="stat"><strong>${fCrags.length}</strong> crags</div>
+      </div>
+      ${fCrags.length?`<p class="section-title">Climbing Areas</p><div class="grid" style="margin-bottom:32px">${fCrags.map(summitCard).join('')}</div>`:''}
+      <p class="section-title">${t('sectionClimbing')}</p>
+      ${fRoutes.length?`<div class="grid">${fRoutes.map(climbingCard).join('')}</div>`:`<div class="empty">${t('noRoutesFound')}</div>`}
+    </div>`;
+}
+
+async function renderClimbingCragPage(slug) {
+  document.getElementById('app').innerHTML = `<div class="loading" style="padding:60px 40px">${t('loading')}</div>`;
+  await ensureDataLoaded();
+  let crag = [...allSummits,...allHills].find(s=>s.type==='crag'&&(toSlug(s.name)===slug||toSlug(s.name_sl||'')===slug));
+  if (!crag) { try { const r=await fetch(`${API}/summits/by-slug/${slug}`); if(r.ok) crag=await r.json(); } catch {} }
+  if (!crag) { document.getElementById('app').innerHTML=`<div class="empty" style="padding:80px 40px">${t('notFound')}</div>`; return; }
+
+  const routes = allClimbing.filter(r=>r.summit_id===crag.id);
+  let weather=null, conditions=[];
+  try {
+    try { weather = await fetchWeather(crag); } catch {}
+    if (routes.length) {
+      const all = await Promise.all(routes.slice(0,4).map(r=>fetch(`${API}/conditions/climbing/${r.id}`).then(res=>res.ok?res.json():[]).catch(()=>[])));
+      conditions = all.flat().sort((a,b)=>new Date(b.reported_at)-new Date(a.reported_at)).slice(0,5);
+    }
+  } catch {}
+
+  document.getElementById('app').innerHTML = `
+    <div class="summit-detail">
+      <div class="breadcrumb"><a onclick="navigate('/climbing')">${t('backToClimbing')}</a></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div class="summit-detail-name">${iname(crag)}</div>
+        <span class="badge badge-crag">crag</span>
+      </div>
+      <div class="summit-detail-meta">
+        ${crag.elevation_m?`<div class="detail-meta-item"><span class="val">${crag.elevation_m}m</span>${t('elevation')}</div>`:''}
+        ${crag.area_name?`<div class="detail-meta-item"><span class="val">${crag.area_name}</span>${t('area')}</div>`:''}
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">${t('weather')}</div>${buildWeatherHtml(weather)}
+      </div>
+      ${desc(crag)?`<div class="detail-desc" style="margin-top:20px">${desc(crag)}</div>`:''}
+      <div class="detail-section">
+        <div class="detail-section-title">${t('climbingRoutes')} (${routes.length})</div>
+        ${routes.length?`<div class="grid">${routes.map(climbingCard).join('')}</div>`:`<p style="color:#555;font-size:13px">${t('noRoutes')}</p>`}
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">${t('conditions')}</div>${conditionsListHtml(conditions)}
+      </div>
+    </div>`;
+}
+
+async function renderTrailsPage() {
+  await ensureDataLoaded();
+  const q = (document.getElementById('search')?.value||'').toLowerCase();
+  const filtered = q ? allTrails.filter(tr=>tr.name.toLowerCase().includes(q)) : allTrails;
+  const km = filtered.reduce((s,tr)=>s+(tr.distance_km||0),0).toFixed(0);
+  document.getElementById('app').innerHTML = `
+    <div class="container">
+      <div class="stats">
+        <div class="stat"><strong>${filtered.length}</strong> trails</div>
+        <div class="stat"><strong>${km}km</strong> total</div>
+      </div>
+      <p class="section-title">${t('sectionTrails')}</p>
+      ${filtered.length?`<div class="grid">${filtered.map(trailCard).join('')}</div>`:`<div class="empty">${t('noTrailsFound')}</div>`}
+    </div>`;
+}
+
+async function renderTrailDetailPage(slug) {
+  document.getElementById('app').innerHTML = `<div class="loading" style="padding:60px 40px">${t('loading')}</div>`;
+  await ensureDataLoaded();
+  let trail = allTrails.find(tr=>toSlug(tr.name)===slug||toSlug(tr.name_sl||'')===slug);
+  if (!trail) { try { const r=await fetch(`${API}/trails/by-slug/${slug}`); if(r.ok) trail=await r.json(); } catch {} }
+  if (!trail) { document.getElementById('app').innerHTML=`<div class="empty" style="padding:80px 40px">${t('notFound')}</div>`; return; }
+
+  let conditions=[], photos=[];
+  try {
+    const [cr,pr] = await Promise.all([
+      fetch(`${API}/conditions/trail/${trail.id}`),
+      fetch(`${API}/photos/trail/${trail.id}`)
+    ]);
+    if (cr.ok) conditions = await cr.json();
+    if (pr.ok) photos = await pr.json();
+  } catch {}
+
+  const summit = [...allSummits,...allHills].find(s=>s.id===trail.summit_id);
+  const token = localStorage.getItem('vrh_token');
+
+  document.getElementById('app').innerHTML = `
+    <div class="summit-detail">
+      <div class="breadcrumb">
+        <a onclick="navigate('/trails')">${t('backToTrails')}</a>
+        ${summit?` / <a onclick="navigate('/summit/${toSlug(summit.name)}')">${iname(summit)}</a>`:''}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div class="summit-detail-name">${iname(trail)}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge badge-${trail.activity_type}">${tAct(trail.activity_type)}</span>
+          <span class="badge diff-badge ${trail.difficulty==='hard'?'diff-demanding':trail.difficulty==='medium'?'diff-moderate':'diff-easy'}">${tDiff(trail.difficulty)}</span>
+        </div>
+      </div>
+      <div class="summit-detail-meta">
+        ${trail.distance_km?`<div class="detail-meta-item"><span class="val">${trail.distance_km}km</span>${t('distance')}</div>`:''}
+        ${trail.elevation_gain_m?`<div class="detail-meta-item"><span class="val">+${trail.elevation_gain_m}m</span>${t('gain')}</div>`:''}
+        ${trail.activity_type?`<div class="detail-meta-item"><span class="val">${tAct(trail.activity_type)}</span>${t('type')}</div>`:''}
+      </div>
+      ${buildTickSection({trailId:trail.id})}
+      ${desc(trail)?`<div class="detail-desc" style="margin-top:20px">${desc(trail)}</div>`:''}
+      <div class="detail-section">
+        <div class="detail-section-title">${t('conditions')}</div>
+        ${conditionsListHtml(conditions)}
+        <div style="margin-top:12px">
+          <button class="auth-btn primary" onclick="openConditionsPage('trail','${trail.id}','${trail.name.replace(/'/g,"\\'")}')">${t('addReport')}</button>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">${t('photos')}</div>
+        ${photosListHtml(photos)}
+        ${token?`<div class="upload-area" style="margin-top:12px" onclick="document.getElementById('trail-photo-input').click()">
+          <input type="file" id="trail-photo-input" accept="image/*" onchange="uploadPhoto('trail','${trail.id}',this)">
+          <span style="color:#555;font-size:13px">${t('uploadPhoto')}</span>
+        </div>`:''}
+      </div>
+    </div>`;
+}
+
+async function renderConditionsPage() {
+  document.getElementById('app').innerHTML = `
+    <div class="container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <p class="section-title" style="margin:0">${t('sectionConditions')}</p>
+        <button class="auth-btn primary" onclick="showConditionsForm()">${t('addReport')}</button>
+      </div>
+      <div id="cond-form-wrap" style="display:none;background:#1a1d26;border:1px solid #333;border-radius:12px;padding:20px;margin-bottom:20px">
         <h3 style="margin-bottom:16px;font-size:16px">New conditions report</h3>
         <select class="form-input" id="report-type" onchange="updateReportSelect()">
           <option value="trail">Trail</option>
@@ -309,1322 +862,549 @@
           <option value="poor">Poor conditions</option>
           <option value="closed">Closed / dangerous</option>
         </select>
-        <textarea class="form-input" id="report-notes" placeholder="Describe the conditions in detail..." rows="3" style="resize:vertical"></textarea>
+        <textarea class="form-input" id="report-notes" placeholder="Describe the conditions..." rows="3" style="resize:vertical"></textarea>
         <button class="auth-btn primary" onclick="submitConditions()">Submit report</button>
-        <button class="auth-btn" onclick="document.getElementById('conditions-form').style.display='none'" style="margin-left:8px">Cancel</button>
+        <button class="auth-btn" onclick="document.getElementById('cond-form-wrap').style.display='none'" style="margin-left:8px">Cancel</button>
       </div>
-      <div class="grid" id="conditions-grid"><div class="loading">Loading conditions...</div></div>
+      <div class="stats" id="cond-stats"></div>
+      <div class="grid" id="cond-grid"><div class="loading">${t('loading')}</div></div>
+    </div>`;
+  await ensureDataLoaded();
+  applyTranslations();
+  loadConditionsInto('cond-grid','cond-stats');
+}
+
+// ── Conditions helpers ────────────────────────────────────────
+async function loadConditionsInto(gridId, statsId) {
+  try {
+    const res = await fetch(`${API}/conditions/recent`);
+    const items = await res.json();
+    const statsEl = document.getElementById(statsId);
+    if (statsEl) statsEl.innerHTML = `<div class="stat"><strong>${items.length}</strong> recent reports</div>`;
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    grid.innerHTML = items.length
+      ? items.map(c=>`<div class="card">
+          <div class="card-header"><div class="card-title">${c.trail_name||c.route_name}</div><span class="status-${c.status}">${c.status}</span></div>
+          <div class="card-desc">${c.notes||'No details provided.'}</div>
+          <div class="report-meta">Reported by ${c.username||'Admin'} · ${new Date(c.reported_at).toLocaleDateString()}</div>
+        </div>`).join('')
+      : `<div class="empty">${t('noConditions')}</div>`;
+  } catch {}
+}
+
+function showConditionsForm() {
+  const f = document.getElementById('cond-form-wrap'); if (!f) return;
+  f.style.display = 'block'; updateReportSelect();
+}
+
+function openConditionsPage(type, targetId, targetName) {
+  navigate('/conditions');
+  setTimeout(()=>{
+    showConditionsForm();
+    const typeEl = document.getElementById('report-type');
+    if (typeEl) { typeEl.value = type; updateReportSelect(); }
+    setTimeout(()=>{
+      const sel = document.getElementById('report-target');
+      if (sel) { for (let o of sel.options) { if (o.value===targetId){o.selected=true;break;} } }
+    }, 60);
+  }, 120);
+}
+
+function updateReportSelect() {
+  const typeEl = document.getElementById('report-type');
+  const sel = document.getElementById('report-target');
+  if (!typeEl||!sel) return;
+  const items = typeEl.value==='trail' ? allTrails : allClimbing;
+  sel.innerHTML = items.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
+}
+
+async function submitConditions() {
+  const token = localStorage.getItem('vrh_token');
+  const typeEl = document.getElementById('report-type');
+  if (!typeEl) return;
+  const body = {
+    status: document.getElementById('report-status')?.value,
+    notes:  document.getElementById('report-notes')?.value,
+    trail_id: typeEl.value==='trail' ? document.getElementById('report-target')?.value : null,
+    climbing_route_id: typeEl.value==='climbing' ? document.getElementById('report-target')?.value : null
+  };
+  const res = await fetch(`${API}/conditions`, {
+    method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`}, body:JSON.stringify(body)
+  });
+  if (res.ok) {
+    document.getElementById('cond-form-wrap').style.display='none';
+    const notesEl = document.getElementById('report-notes'); if (notesEl) notesEl.value='';
+    loadConditionsInto('cond-grid','cond-stats');
+  }
+}
+
+// ── Shared HTML helpers ───────────────────────────────────────
+function conditionsListHtml(conditions) {
+  if (!conditions.length) return `<p style="color:#555;font-size:13px">${t('noConditionsForItem')}</p>`;
+  return `<div class="conditions-list">${conditions.map(c=>`
+    <div class="condition-item">
+      <div class="cond-status status-${c.status}">${c.status}</div>
+      ${c.notes?`<div class="cond-notes">${c.notes}</div>`:''}
+      <div class="cond-meta">${c.trail_name||c.route_name||''} ${(c.trail_name||c.route_name)?'·':''} ${c.username||'Admin'} · ${new Date(c.reported_at).toLocaleDateString()}</div>
+    </div>`).join('')}</div>`;
+}
+
+function photosListHtml(photos) {
+  if (!photos.length) return `<p style="color:#555;font-size:13px">${t('noPhotos')}</p>`;
+  return `<div class="photos-grid">${photos.map(p=>`
+    <div class="photo-item">
+      <img src="${p.url}" alt="${p.caption||''}">
+      ${p.caption?`<div class="photo-caption">${p.caption}</div>`:''}
+    </div>`).join('')}</div>`;
+}
+
+async function uploadPhoto(type, id, fileInput) {
+  const token = localStorage.getItem('vrh_token');
+  if (!token) { showModal('login'); return; }
+  const file = fileInput.files[0]; if (!file) return;
+  const formData = new FormData();
+  formData.append('photo', file);
+  await fetch(`${API}/photos/${type}/${id}`, { method:'POST', headers:{Authorization:`Bearer ${token}`}, body:formData });
+  route();
+}
+
+// ── Search ────────────────────────────────────────────────────
+function handleSearch() {
+  const path = window.location.pathname;
+  if (path==='/summits') renderSummitsPage();
+  else if (path==='/hills') renderHillsPage();
+  else if (path==='/climbing') renderClimbingPage();
+  else if (path==='/trails') renderTrailsPage();
+}
+
+// ── Area expand/collapse ──────────────────────────────────────
+function toggleAreaOverflow(areaId, hiddenCount) {
+  const panel = document.getElementById('overflow-'+areaId);
+  const btn   = document.getElementById('btn-'+areaId);
+  if (!panel||!btn) return;
+  const expanded = panel.dataset.expanded==='1';
+  if (expanded) {
+    panel.style.height = panel.scrollHeight+'px'; panel.offsetHeight;
+    panel.style.height = '0'; panel.dataset.expanded = '0';
+    btn.textContent = tShowMore(hiddenCount);
+  } else {
+    panel.style.height = panel.scrollHeight+'px'; panel.dataset.expanded = '1';
+    btn.textContent = t('showLess');
+    panel.addEventListener('transitionend', ()=>{ if (panel.dataset.expanded==='1') panel.style.height='auto'; }, {once:true});
+  }
+}
+
+// ── Weather ───────────────────────────────────────────────────
+const SLOVENIA_CENTER = [46.1512, 14.9955];
+const ARSO_STATION_MAP = {
+  'triglav':{id:'KREDA-ICA',label:'Kredarica'},'škrlatica':{id:'KREDA-ICA',label:'Kredarica'},
+  'mangart':{id:'KREDA-ICA',label:'Kredarica'},'jalovec':{id:'KREDA-ICA',label:'Kredarica'},
+  'kanjavec':{id:'KREDA-ICA',label:'Kredarica'},'razor':{id:'KREDA-ICA',label:'Kredarica'},
+  'prisojnik':{id:'KREDA-ICA',label:'Kredarica'},'vogel':{id:'VOGEL',label:'Vogel'},
+  'bogatin':{id:'VOGEL',label:'Vogel'},'črna prst':{id:'VOGEL',label:'Vogel'},
+  'stol':{id:'RATECE',label:'Rateče'},'kepa':{id:'RATECE',label:'Rateče'},
+  'golica':{id:'RATECE',label:'Rateče'},'grintovec':{id:'LISCA',label:'Lisca'},
+  'skuta':{id:'LISCA',label:'Lisca'},'ojstrica':{id:'LISCA',label:'Lisca'},
+};
+const HARDCODED_COORDS = {
+  'Triglav':[46.3794,13.8369],'Mangart':[46.4494,13.6697],'Jalovec':[46.4131,13.7178],
+  'Škrlatica':[46.3897,13.8628],'Kanjavec':[46.3619,13.8014],'Razor':[46.3756,13.7681],
+  'Prisojnik':[46.3981,13.7397],'Grintovec':[46.3706,14.5297],'Skuta':[46.3542,14.4936],
+  'Ojstrica':[46.3394,14.5178],'Brana':[46.3544,14.4628],'Storžič':[46.3997,14.2897],
+  'Stol':[46.4894,14.0897],'Kepa':[46.4897,13.9197],'Golica':[46.4694,13.9997],
+  'Osp':[45.5731,13.8697],'Misja Peč':[45.5631,13.8597],
+};
+
+function getSummitCoords(summit) {
+  if (summit.lat!=null && summit.lng!=null) return [summit.lat,summit.lng];
+  const hc = HARDCODED_COORDS[summit.name]||HARDCODED_COORDS[summit.name_sl];
+  return hc||SLOVENIA_CENTER;
+}
+
+function wmoCondition(code) {
+  if (code===0)  return {emoji:'☀️',en:'Clear sky',sl:'Jasno'};
+  if (code<=3)   return {emoji:'⛅',en:'Partly cloudy',sl:'Delno oblačno'};
+  if (code<=48)  return {emoji:'🌫️',en:'Foggy',sl:'Megleno'};
+  if (code<=55)  return {emoji:'🌦️',en:'Drizzle',sl:'Rosenje'};
+  if (code<=67)  return {emoji:'🌧️',en:'Rainy',sl:'Deževno'};
+  if (code<=77)  return {emoji:'❄️',en:'Snowy',sl:'Snežno'};
+  if (code<=82)  return {emoji:'🌦️',en:'Showers',sl:'Plohe'};
+  if (code<=86)  return {emoji:'🌨️',en:'Snow showers',sl:'Snežne plohe'};
+  return         {emoji:'⛈️',en:'Thunderstorm',sl:'Nevihta'};
+}
+
+function descToEmoji(d) {
+  if (!d) return '🌡️'; d=d.toLowerCase();
+  if (d.includes('jasno')||d.includes('clear')) return '☀️';
+  if (d.includes('delno oblačno')||d.includes('partly')) return '⛅';
+  if (d.includes('oblačno')||d.includes('cloud')) return '☁️';
+  if (d.includes('megla')||d.includes('fog')) return '🌫️';
+  if (d.includes('snežne plohe')||d.includes('snow show')) return '🌨️';
+  if (d.includes('sneg')||d.includes('snow')) return '❄️';
+  if (d.includes('nevihta')||d.includes('thunder')) return '⛈️';
+  if (d.includes('ploha')||d.includes('shower')) return '🌦️';
+  if (d.includes('dež')||d.includes('rain')) return '🌧️';
+  return '🌡️';
+}
+
+async function fetchWeather(summit) {
+  const key = (summit.name||'').toLowerCase().trim();
+  const station = ARSO_STATION_MAP[key];
+  if (station) {
+    try { const r=await fetch(`${API}/weather/arso/${station.id}`); if(r.ok) return await r.json(); } catch {}
+  }
+  const [lat,lng] = getSummitCoords(summit);
+  const r = await fetch(`${API}/weather/fallback?lat=${lat}&lon=${lng}`);
+  if (!r.ok) throw new Error('Weather unavailable');
+  return await r.json();
+}
+
+function buildWeatherHtml(weather) {
+  const unavail = lang==='sl'?'Vreme ni na voljo.':'Weather data unavailable.';
+  if (!weather) return `<div class="weather-widget"><div class="weather-unavail">${unavail}</div></div>`;
+  let descText, emoji;
+  if (weather.source==='openmeteo' && weather.weathercode!=null) {
+    const c=wmoCondition(weather.weathercode); descText=lang==='sl'?c.sl:c.en; emoji=c.emoji;
+  } else { descText=weather.description||(lang==='sl'?'Ni podatka':'No data'); emoji=descToEmoji(weather.description); }
+  const lbl = { wind:lang==='sl'?'Veter':'Wind', humidity:lang==='sl'?'Vlažnost':'Humidity', updated:lang==='sl'?'Zadnja posodobitev':'Last updated' };
+  let updStr='';
+  if (weather.updated_at) { try { updStr=new Date(weather.updated_at).toLocaleTimeString(lang==='sl'?'sl-SI':'en-GB',{hour:'2-digit',minute:'2-digit'}); } catch {} }
+  const windVal = weather.wind_speed!=null?`${weather.wind_speed} km/h`:'—';
+  const humidRow = weather.humidity!=null?`<div class="weather-meta-row"><span class="weather-meta-label">${lbl.humidity}</span><span class="weather-meta-val">${Math.round(weather.humidity)}%</span></div>`:'';
+  const badgeCls = weather.source==='openmeteo'?'weather-source-badge source-openmeteo':'weather-source-badge';
+  return `<div class="weather-widget">
+    <div class="weather-top">
+      <span class="weather-emoji">${emoji}</span>
+      <div><div class="weather-temp">${Math.round(weather.temperature)}°C</div><div class="weather-condition-label">${descText}</div></div>
+      <div class="weather-wind"><div class="weather-wind-label">${lbl.wind}</div><div class="weather-wind-val">${windVal}</div></div>
     </div>
-    <div id="coming-soon-view" style="display:none">
-      <p class="coming-soon-msg" data-i18n="comingSoon">Coming soon / Kmalu na voljo</p>
+    ${humidRow}
+    <div class="weather-footer">
+      <span class="${badgeCls}">${weather.source_label||'Open-Meteo'}</span>
+      ${updStr?`<span class="weather-updated">${lbl.updated}: ${updStr}</span>`:''}
     </div>
-  </div>
+  </div>`;
+}
 
-  <div id="map-view">
-    <div class="map-filters">
-      <button class="map-filter-btn filter-peak active"  onclick="toggleMapFilter('peak')"  id="mf-peak">Peaks</button>
-      <button class="map-filter-btn filter-crag active"  onclick="toggleMapFilter('crag')"  id="mf-crag">Crags</button>
-      <button class="map-filter-btn filter-hill active"  onclick="toggleMapFilter('hill')"  id="mf-hill">Hills</button>
-      <span class="map-count" id="map-count"></span>
+// ── Tick section ──────────────────────────────────────────────
+function buildTickSection({summitId,trailId,routeId}) {
+  const itemId = summitId||trailId||routeId;
+  const ticked = summitId?!!myTicks.summits[summitId]:trailId?!!myTicks.trails[trailId]:!!myTicks.routes[routeId];
+  const args = summitId?`{summitId:'${summitId}'}`:trailId?`{trailId:'${trailId}'}`:`{routeId:'${routeId}'}`;
+  return `<div class="detail-section">
+    <div class="detail-section-title">${lang==='sl'?'Moj seznam':t('myList')}</div>
+    <button id="tick-btn-${itemId}" class="tick-btn ${ticked?'ticked':''}" onclick="toggleTick(${args})">
+      <span class="tick-icon">${ticked?'✓':'○'}</span> ${ticked?t('ticked')||'✓ Ticked':'○ Mark as done'}
+    </button>
+    <div id="tick-form-container" class="tick-form" data-summit-id="${summitId||''}" data-trail-id="${trailId||''}" data-route-id="${routeId||''}">
+      <label>Date of ascent (optional)</label>
+      <input class="form-input" type="date" id="tick-form-date" style="margin-bottom:0">
+      <label>Notes (optional)</label>
+      <textarea class="form-input" id="tick-form-notes" rows="2" style="resize:vertical;margin-bottom:0" placeholder="How did it go?"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="auth-btn primary" onclick="submitTickForm()">Save</button>
+        <button class="auth-btn" onclick="cancelTickForm()">Cancel</button>
+      </div>
     </div>
-    <div style="padding:0 40px 40px">
-      <div id="map-container"></div>
+  </div>`;
+}
+
+async function toggleTick({summitId,trailId,routeId}) {
+  const token = localStorage.getItem('vrh_token');
+  if (!token) { showModal('login'); return; }
+  const existing = summitId?myTicks.summits[summitId]:trailId?myTicks.trails[trailId]:myTicks.routes[routeId];
+  if (existing) {
+    const res = await fetch(`${API}/ticklist/${existing}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+    if (res.ok) {
+      if (summitId) delete myTicks.summits[summitId];
+      if (trailId)  delete myTicks.trails[trailId];
+      if (routeId)  delete myTicks.routes[routeId];
+      updateTickBtn(summitId||trailId||routeId,false);
+    }
+  } else { showTickForm({summitId,trailId,routeId}); }
+}
+
+function showTickForm({summitId,trailId,routeId}) {
+  const f=document.getElementById('tick-form-container'); if(!f) return;
+  f.style.display='block';
+  f.dataset.summitId=summitId||''; f.dataset.trailId=trailId||''; f.dataset.routeId=routeId||'';
+  document.getElementById('tick-form-date').value='';
+  document.getElementById('tick-form-notes').value='';
+}
+
+async function submitTickForm() {
+  const token=localStorage.getItem('vrh_token');
+  const f=document.getElementById('tick-form-container');
+  const body={
+    summit_id:f.dataset.summitId||undefined, trail_id:f.dataset.trailId||undefined,
+    climbing_route_id:f.dataset.routeId||undefined,
+    ascent_date:document.getElementById('tick-form-date').value||null,
+    notes:document.getElementById('tick-form-notes').value||null
+  };
+  const res=await fetch(`${API}/ticklist`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify(body)});
+  if (res.ok) {
+    const row=await res.json();
+    if (f.dataset.summitId) myTicks.summits[f.dataset.summitId]=row.id;
+    if (f.dataset.trailId)  myTicks.trails[f.dataset.trailId]=row.id;
+    if (f.dataset.routeId)  myTicks.routes[f.dataset.routeId]=row.id;
+    f.style.display='none';
+    updateTickBtn(f.dataset.summitId||f.dataset.trailId||f.dataset.routeId,true);
+  }
+}
+
+function cancelTickForm() { const f=document.getElementById('tick-form-container'); if(f) f.style.display='none'; }
+
+function updateTickBtn(itemId, ticked) {
+  const btn=document.getElementById('tick-btn-'+itemId); if(!btn) return;
+  if (ticked) { btn.classList.add('ticked'); btn.innerHTML='<span class="tick-icon">✓</span> Ticked'; }
+  else { btn.classList.remove('ticked'); btn.innerHTML='<span class="tick-icon">○</span> Mark as done'; }
+}
+
+// ── My Ascents ────────────────────────────────────────────────
+async function loadMyTicks() {
+  const token=localStorage.getItem('vrh_token'); if(!token) return;
+  try { const r=await fetch(`${API}/ticklist/check`,{headers:{Authorization:`Bearer ${token}`}}); if(r.ok) myTicks=await r.json(); } catch {}
+}
+
+async function openAscents() {
+  document.getElementById('ascents-overlay').style.display='block';
+  document.getElementById('ascents-content').innerHTML='<div class="loading">Loading...</div>';
+  const token=localStorage.getItem('vrh_token');
+  const res=await fetch(`${API}/ticklist/me`,{headers:{Authorization:`Bearer ${token}`}});
+  if (!res.ok) { document.getElementById('ascents-content').innerHTML='<div class="ascents-empty">Could not load ascents.</div>'; return; }
+  renderAscents(await res.json());
+}
+
+function closeAscents() { document.getElementById('ascents-overlay').style.display='none'; }
+
+function renderAscents(ticks) {
+  const st=ticks.filter(t=>t.summit_id), tt=ticks.filter(t=>t.trail_id), rt=ticks.filter(t=>t.climbing_route_id);
+  document.getElementById('ascents-subtitle').textContent = `${ticks.length} total · ${st.length} summit${st.length!==1?'s':''} · ${tt.length} trail${tt.length!==1?'s':''} · ${rt.length} route${rt.length!==1?'s':''}`;
+  if (!ticks.length) { document.getElementById('ascents-content').innerHTML='<div class="ascents-empty">No ascents logged yet.</div>'; return; }
+  const item=tick=>{
+    const name=tick.summit_name||tick.trail_name||tick.route_name||'Unknown';
+    const nameSl=tick.summit_name_sl||tick.trail_name_sl||tick.route_name_sl||'';
+    const dn=lang==='sl'&&nameSl?nameSl:name;
+    const meta=[tick.elevation_m?`${tick.elevation_m}m`:null,tick.distance_km?`${tick.distance_km}km`:null,tick.grade_french||tick.grade_uiaa||null,tick.ascent_date?new Date(tick.ascent_date).toLocaleDateString():null].filter(Boolean).join(' · ');
+    return `<div class="ascent-item" id="ascent-row-${tick.id}">
+      <div><div class="ascent-name">${dn}</div>${meta?`<div class="ascent-meta">${meta}</div>`:''} ${tick.notes?`<div class="ascent-notes">"${tick.notes}"</div>`:''}</div>
+      <button class="ascent-remove" onclick="removeTick('${tick.id}','${tick.summit_id||''}','${tick.trail_id||''}','${tick.climbing_route_id||''}')">×</button>
+    </div>`;
+  };
+  let html='';
+  if(st.length){html+=`<div class="ascents-section-title">Summits & Crags (${st.length})</div>${st.map(item).join('')}`;}
+  if(tt.length){html+=`<div class="ascents-section-title">Trails (${tt.length})</div>${tt.map(item).join('')}`;}
+  if(rt.length){html+=`<div class="ascents-section-title">Climbing Routes (${rt.length})</div>${rt.map(item).join('')}`;}
+  document.getElementById('ascents-content').innerHTML=html;
+}
+
+async function removeTick(tickId, summitId, trailId, routeId) {
+  const token=localStorage.getItem('vrh_token');
+  const res=await fetch(`${API}/ticklist/${tickId}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}});
+  if (res.ok) {
+    if(summitId) delete myTicks.summits[summitId];
+    if(trailId)  delete myTicks.trails[trailId];
+    if(routeId)  delete myTicks.routes[routeId];
+    const row=document.getElementById('ascent-row-'+tickId); if(row) row.remove();
+    const rem=document.querySelectorAll('.ascent-item').length;
+    if(!rem) document.getElementById('ascents-content').innerHTML='<div class="ascents-empty">No ascents logged yet.</div>';
+    document.getElementById('ascents-subtitle').textContent=rem+' total';
+  }
+}
+
+// ── Auth ──────────────────────────────────────────────────────
+function showModal(mode) {
+  authMode=mode;
+  document.getElementById('modal-title').textContent=mode==='login'?t('loginTitle'):t('registerTitle');
+  document.getElementById('register-fields').style.display=mode==='register'?'block':'none';
+  document.getElementById('modal-error').style.display='none';
+  document.getElementById('modal-overlay').style.display='flex';
+}
+function closeModal() {
+  document.getElementById('modal-overlay').style.display='none';
+  document.getElementById('auth-email').value='';
+  document.getElementById('auth-password').value='';
+  document.getElementById('reg-username').value='';
+}
+async function submitAuth() {
+  const email=document.getElementById('auth-email').value;
+  const password=document.getElementById('auth-password').value;
+  const errEl=document.getElementById('modal-error');
+  let body={email,password};
+  if(authMode==='register') body.username=document.getElementById('reg-username').value;
+  try {
+    const res=await fetch(`${API}/auth/${authMode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await res.json();
+    if(!res.ok){errEl.textContent=data.error;errEl.style.display='block';return;}
+    localStorage.setItem('vrh_token',data.token);
+    localStorage.setItem('vrh_user',JSON.stringify(data.user));
+    currentUser=data.user; updateAuthUI(); loadMyTicks(); closeModal();
+  } catch { errEl.textContent='Something went wrong.'; errEl.style.display='block'; }
+}
+function logout() {
+  localStorage.removeItem('vrh_token'); localStorage.removeItem('vrh_user');
+  currentUser=null; myTicks={summits:{},trails:{},routes:{}}; updateAuthUI();
+}
+function updateAuthUI() {
+  if(currentUser){
+    document.getElementById('auth-buttons').style.display='none';
+    document.getElementById('user-menu').style.display='flex';
+    document.getElementById('username-display').textContent=`Hi, ${currentUser.username}!`;
+  } else {
+    document.getElementById('auth-buttons').style.display='flex';
+    document.getElementById('user-menu').style.display='none';
+  }
+}
+
+// ── Detail overlay (climbing routes) ─────────────────────────
+function closeDetail() { document.getElementById('detail-overlay').style.display='none'; detailType=null; detailId=null; }
+
+async function openDetail(type, id) {
+  detailType=type; detailId=id;
+  const overlay=document.getElementById('detail-overlay');
+  overlay.style.display='block'; overlay.scrollTop=0;
+  document.getElementById('detail-content').innerHTML='<div class="loading">Loading...</div>';
+  const base='climbing-routes';
+  const [itemRes,condRes,photoRes]=await Promise.all([
+    fetch(`${API}/${base}/${id}`),
+    fetch(`${API}/conditions/climbing/${id}`),
+    fetch(`${API}/photos/climbing/${id}`)
+  ]);
+  const item=await itemRes.json();
+  const conditions=condRes.ok?await condRes.json():[];
+  const photos=photoRes.ok?await photoRes.json():[];
+  renderDetailContent(item,conditions,photos);
+}
+
+function renderDetailContent(item, conditions, photos) {
+  const token=localStorage.getItem('vrh_token');
+  const gradesHtml=`<div class="detail-grades">
+    ${item.grade_french?`<div class="detail-grade-block"><div class="detail-grade-label">French</div><span class="detail-grade-value">${item.grade_french}</span></div>`:''}
+    ${item.grade_uiaa?`<div class="detail-grade-block"><div class="detail-grade-label">UIAA</div><span class="detail-grade-value">${item.grade_uiaa}</span></div>`:''}
+    ${item.grade_alpine?`<div class="detail-grade-block"><div class="detail-grade-label">Alpine</div><span class="detail-grade-value">${item.grade_alpine}</span></div>`:''}
+  </div>`;
+  const metaHtml=`<div class="detail-meta-row">
+    ${item.length_m?`<div class="detail-meta-item"><span class="val">${item.length_m}m</span>Length</div>`:''}
+    ${item.num_bolts?`<div class="detail-meta-item"><span class="val">${item.num_bolts}</span>${t('bolts')}</div>`:''}
+    ${item.rock_type?`<div class="detail-meta-item"><span class="val">${item.rock_type}</span>Rock</div>`:''}
+    <div class="detail-meta-item"><span class="val">${tAct(item.type)}</span>Type</div>
+  </div>`;
+  const condFormHtml=token?`
+    <button class="auth-btn" onclick="document.getElementById('detail-cond-form').style.display='block';this.style.display='none'" style="margin-top:12px">+ Add report</button>
+    <div id="detail-cond-form" class="detail-inline-form" style="display:none">
+      <select class="form-input" id="detail-cond-status">
+        <option value="good">${t('statusGood')}</option><option value="fair">${t('statusFair')}</option>
+        <option value="poor">${t('statusPoor')}</option><option value="closed">${t('statusClosed')}</option>
+      </select>
+      <textarea class="form-input" id="detail-cond-notes" placeholder="Describe the conditions..." rows="2" style="resize:vertical"></textarea>
+      <button class="auth-btn primary" onclick="submitDetailConditions()">Submit</button>
+      <button class="auth-btn" onclick="document.getElementById('detail-cond-form').style.display='none'" style="margin-left:8px">Cancel</button>
+    </div>`:'<div style="color:#555;font-size:12px;margin-top:10px">Log in to add a conditions report.</div>';
+  const photoFormHtml=token?`
+    <button class="auth-btn" onclick="document.getElementById('detail-photo-form').style.display='block';this.style.display='none'" style="margin-top:12px">+ Upload photo</button>
+    <div id="detail-photo-form" class="detail-inline-form" style="display:none">
+      <label class="upload-area" for="detail-photo-input">
+        <div style="color:#666;font-size:14px">Click to select a photo</div>
+        <div id="detail-photo-name" style="color:#888;font-size:12px;margin-top:4px"></div>
+        <input type="file" id="detail-photo-input" accept="image/*" onchange="document.getElementById('detail-photo-name').textContent=this.files[0]?.name||''">
+      </label>
+      <input class="form-input" type="text" id="detail-photo-caption" placeholder="Caption (optional)" style="margin-top:8px">
+      <button class="auth-btn primary" onclick="submitDetailPhoto()" style="margin-top:4px">Upload</button>
+      <button class="auth-btn" onclick="document.getElementById('detail-photo-form').style.display='none'" style="margin-left:8px">Cancel</button>
+    </div>`:'<div style="color:#555;font-size:12px;margin-top:10px">Log in to upload photos.</div>';
+
+  document.getElementById('detail-content').innerHTML=`
+    <div class="card-header" style="margin-bottom:6px">
+      <div class="detail-name">${iname(item)}</div>
+      <span class="badge badge-sport">${tAct(item.type)}</span>
     </div>
-  </div>
-
-  <script>
-    const API = '';
-    let allSummits = [], allHills = [], allClimbing = [], allTrails = [];
-    let currentTab = 'summits';
-    let currentCategory = 'hiking';
-    let currentHikingTab = 'summits';
-
-    // ── i18n ──────────────────────────────────────────────────────
-    const TRANSLATIONS = {
-      en: {
-        tabs: { summits:'Summits', hills:'Hills', climbing:'Climbing Routes', trails:'Trails', conditions:'Conditions' },
-        sectionSummits:'Summits & crags', sectionHills:'Hills & lower peaks',
-        sectionClimbing:'Climbing routes', sectionTrails:'Hiking & running trails',
-        sectionConditions:'Recent conditions reports',
-        searchPlaceholder:'Search summits, routes, trails...',
-        login:'Log in', signup:'Sign up', logout:'Log out',
-        addReport:'+ Add report', showLess:'Show less',
-        noConditions:'No conditions reports yet — be the first!',
-        statusGood:'Good conditions', statusFair:'Fair conditions',
-        statusPoor:'Poor conditions', statusClosed:'Closed / dangerous',
-        loginTitle:'Log in', registerTitle:'Create account',
-        difficulty: { hard:'hard', medium:'medium', easy:'easy' },
-        activityType: { hiking:'hiking', sport:'sport', alpine:'alpine', trail_running:'trail_running', cycling:'cycling' },
-        noSummitsFound: 'No summits found', noHillsFound: 'No hills found',
-        noRoutesFound: 'No routes found', noTrailsFound: 'No trails found',
-        bolts: 'bolts',
-        catHiking: 'Hiking', catClimbing: 'Climbing', catTrailRunning: 'Trail Running', catCycling: 'Cycling', catMap: 'Map',
-        comingSoon: 'Coming soon / Kmalu na voljo'
-      },
-      sl: {
-        tabs: { summits:'Vrhovi', hills:'Hribi', climbing:'Plezalne smeri', trails:'Poti', conditions:'Razmere' },
-        sectionSummits:'Vsi vrhovi', sectionHills:'Hribi in nižji vrhovi',
-        sectionClimbing:'Plezalne smeri', sectionTrails:'Pohodniške in tekaške poti',
-        sectionConditions:'Zadnja poročila o razmerah',
-        searchPlaceholder:'Išči vrhove, smeri, poti...',
-        login:'Prijava', signup:'Registracija', logout:'Odjava',
-        addReport:'+ Dodaj poročilo', showLess:'Pokaži manj',
-        noConditions:'Še ni poročil — bodi prvi!',
-        statusGood:'Dobre razmere', statusFair:'Srednje razmere',
-        statusPoor:'Slabe razmere', statusClosed:'Zaprto / nevarno',
-        loginTitle:'Prijava', registerTitle:'Ustvari račun',
-        difficulty: { hard:'zahtevno', medium:'srednje zahtevno', easy:'lahko' },
-        activityType: { hiking:'pohodništvo', sport:'športno plezanje', alpine:'alpinizem', trail_running:'tek v naravi', cycling:'kolesarjenje' },
-        noSummitsFound: 'Ni najdenih vrhov', noHillsFound: 'Ni najdenih hribov',
-        noRoutesFound: 'Ni najdenih smeri', noTrailsFound: 'Ni najdenih poti',
-        bolts: 'svedrov',
-        catHiking: 'Pohodništvo', catClimbing: 'Plezanje', catTrailRunning: 'Tek v naravi', catCycling: 'Kolesarjenje', catMap: 'Zemljevid',
-        comingSoon: 'Kmalu na voljo / Coming soon'
-      }
-    };
-    let lang = localStorage.getItem('vrh_lang') || 'en';
-    function t(key) { return (TRANSLATIONS[lang] || TRANSLATIONS.en)[key] || key; }
-    function tShowMore(n) {
-      return lang === 'sl' ? `Pokaži več (${n} preostalih)` : `Show more (${n} remaining)`;
-    }
-    function desc(item) {
-      return (lang === 'sl' && item.description_sl) ? item.description_sl : (item.description || '');
-    }
-    function cardDesc(item) {
-      if (lang === 'sl') {
-        if (item.description_sl) return `<div class="card-desc">${item.description_sl}</div>`;
-        return `<div class="card-desc-pending">Opis kmalu / Description coming soon</div>`;
-      }
-      return item.description ? `<div class="card-desc">${item.description}</div>` : '';
-    }
-    function tDifficulty(d) { return ((TRANSLATIONS[lang] || TRANSLATIONS.en).difficulty || {})[d] || d; }
-    function tActivityType(a) { return ((TRANSLATIONS[lang] || TRANSLATIONS.en).activityType || {})[a] || a; }
-
-    const SUMMIT_DIFF = {
-      easy:      { en: 'Easy',      sl: 'Lahko',          cls: 'diff-easy' },
-      moderate:  { en: 'Moderate',  sl: 'Srednje',        cls: 'diff-moderate' },
-      demanding: { en: 'Demanding', sl: 'Zahtevno',       cls: 'diff-demanding' },
-      very_hard: { en: 'Very Hard', sl: 'Zelo zahtevno',  cls: 'diff-very-hard' },
-    };
-    function summitDiffBadge(s) {
-      if (s.type === 'crag') return '';
-      let key = s.difficulty; // manual override from DB
-      if (!key) {
-        if (s.elevation_m >= 2500)      key = 'very_hard';
-        else if (s.elevation_m >= 1800) key = 'demanding';
-        else if (s.elevation_m >= 1200) key = 'moderate';
-        else                            key = 'easy';
-      }
-      const d = SUMMIT_DIFF[key];
-      if (!d) return '';
-      return `<span class="badge diff-badge ${d.cls}">${lang === 'sl' ? d.sl : d.en}</span>`;
-    }
-
-    function applyTranslations() {
-      const T = TRANSLATIONS[lang];
-      // Primary nav buttons
-      const catKeys = { hiking:'catHiking', climbing:'catClimbing', trail_running:'catTrailRunning', cycling:'catCycling', map:'catMap' };
-      document.querySelectorAll('.primary-nav-btn[data-cat]').forEach(btn => {
-        const key = catKeys[btn.dataset.cat];
-        if (key && T[key]) btn.textContent = T[key];
-      });
-      // Sub-tabs
-      document.querySelectorAll('.tab[data-tab]').forEach(btn => {
-        const k = btn.dataset.tab;
-        if (T.tabs[k]) btn.textContent = T.tabs[k];
-      });
-      // All data-i18n elements
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const val = T[el.dataset.i18n];
-        if (!val) return;
-        if (el.tagName === 'INPUT') el.placeholder = val;
-        else el.textContent = val;
-      });
-      // Status dropdowns
-      const sel = document.getElementById('report-status');
-      if (sel) {
-        const cur = sel.value;
-        sel.innerHTML = [
-          ['good', T.statusGood], ['fair', T.statusFair],
-          ['poor', T.statusPoor], ['closed', T.statusClosed]
-        ].map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-        sel.value = cur;
-      }
-      // Lang toggle
-      document.getElementById('btn-lang-en').classList.toggle('lang-btn-active', lang === 'en');
-      document.getElementById('btn-lang-sl').classList.toggle('lang-btn-active', lang === 'sl');
-    }
-
-    function setLang(newLang) {
-      lang = newLang;
-      localStorage.setItem('vrh_lang', newLang);
-      applyTranslations();
-      if (currentTab === 'summits')   renderSummits(allSummits);
-      else if (currentTab === 'hills')      renderHills(allHills);
-      else if (currentTab === 'climbing')   renderClimbing(allClimbing, t('sectionClimbing'));
-      else if (currentTab === 'trails')     renderTrails(allTrails, t('sectionTrails'));
-      else if (currentTab === 'conditions') loadConditions();
-      else if (currentTab === 'map') renderMap();
-    }
-
-    async function loadConditions() {
-      const res = await fetch('/conditions/recent');
-      const conditions = await res.json();
-      document.getElementById('conditions-stats').innerHTML = `
-        <div class="stat"><strong>${conditions.length}</strong> recent reports</div>
-      `;
-      const grid = document.getElementById('conditions-grid');
-      if (conditions.length === 0) {
-        grid.innerHTML = `<div class="empty">${t('noConditions')}</div>`;
-        return;
-      }
-      grid.innerHTML = conditions.map(c => `
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">${c.trail_name || c.route_name}</div>
-            <span class="status-${c.status}">${c.status}</span>
-          </div>
-          <div class="card-desc">${c.notes || 'No details provided.'}</div>
-          <div class="report-meta">Reported by ${c.username || 'Admin'} · ${new Date(c.reported_at).toLocaleDateString()}</div>
-        </div>
-      `).join('');
-    }
-
-    function showConditionsForm() {
-      document.getElementById('conditions-form').style.display = 'block';
-      updateReportSelect();
-    }
-
-    function updateReportSelect() {
-      const type = document.getElementById('report-type').value;
-      const select = document.getElementById('report-target');
-      const items = type === 'trail' ? allTrails : allClimbing;
-      select.innerHTML = items.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
-    }
-
-    async function submitConditions() {
-      const token = localStorage.getItem('vrh_token');
-      const type = document.getElementById('report-type').value;
-      const targetId = document.getElementById('report-target').value;
-      const status = document.getElementById('report-status').value;
-      const notes = document.getElementById('report-notes').value;
-
-      const body = {
-        status,
-        notes,
-        trail_id: type === 'trail' ? targetId : null,
-        climbing_route_id: type === 'climbing' ? targetId : null
-      };
-
-      const res = await fetch('/conditions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(body)
-      });
-
-      if (res.ok) {
-        document.getElementById('conditions-form').style.display = 'none';
-        document.getElementById('report-notes').value = '';
-        loadConditions();
-      }
-    }
-    async function loadAll() {
-      const [summitsRes, hillsRes, climbingRes, trailsRes] = await Promise.all([
-        fetch(`${API}/summits?type=summits`),
-        fetch(`${API}/summits?type=hills`),
-        fetch(`${API}/climbing-routes`),
-        fetch(`${API}/trails`)
-      ]);
-      allSummits = await summitsRes.json();
-      allHills   = await hillsRes.json();
-      allClimbing = await climbingRes.json();
-      allTrails = await trailsRes.json();
-      renderSummits(allSummits);
-      renderHills(allHills);
-      renderClimbing(allClimbing);
-      renderTrails(allTrails);
-    }
-
-    function renderAreaGrouped(summits, gridId, idPrefix, emptyMsg) {
-      const grid = document.getElementById(gridId);
-      if (summits.length === 0) { grid.innerHTML = `<div class="empty">${emptyMsg || t('noSummitsFound')}</div>`; return; }
-      const groups = {};
-      for (const s of summits) {
-        const area = s.area_name || 'Other';
-        if (!groups[area]) groups[area] = [];
-        groups[area].push(s);
-      }
-      const LIMIT = 6;
-      const card = s => {
-        const displayName = lang === 'sl' && s.name_sl ? s.name_sl : s.name;
-        return `
-        <div class="card" onclick="openSummitDetail('${s.id}')">
-          <div class="card-header">
-            <div class="card-title">${displayName}</div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-              <span class="badge badge-${s.type}">${s.type}</span>
-              ${summitDiffBadge(s)}
-            </div>
-          </div>
-          <div class="card-meta">${s.elevation_m}m elevation</div>
-          <div class="card-desc">${desc(s)}</div>
-        </div>`;
-      };
-      grid.innerHTML = Object.entries(groups).map(([area, items]) => {
-        const areaId = idPrefix + '-' + area.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const visible = items.slice(0, LIMIT);
-        const hidden  = items.slice(LIMIT);
-        return `
-          <div class="area-section">
-            <div class="area-header">${area}</div>
-            <div class="grid">${visible.map(card).join('')}</div>
-            ${hidden.length ? `
-              <div class="area-overflow" id="overflow-${areaId}" style="height:0" data-expanded="0">
-                <div class="grid" style="margin-top:14px">${hidden.map(card).join('')}</div>
-              </div>
-              <button class="show-more-btn" id="btn-${areaId}"
-                onclick="toggleAreaOverflow('${areaId}', ${hidden.length})">
-                ${tShowMore(hidden.length)}
-              </button>` : ''}
-          </div>`;
-      }).join('');
-    }
-
-    function renderSummits(summits) {
-      const peaks = summits.filter(s => s.type === 'peak').length;
-      const crags = summits.filter(s => s.type === 'crag').length;
-      document.getElementById('summit-stats').innerHTML = `
-        <div class="stat"><strong>${summits.length}</strong> total</div>
-        <div class="stat"><strong>${peaks}</strong> peaks</div>
-        <div class="stat"><strong>${crags}</strong> crags</div>
-      `;
-      renderAreaGrouped(summits, 'summits-grid', 's');
-    }
-
-    function renderHills(hills) {
-      document.getElementById('hills-stats').innerHTML = `
-        <div class="stat"><strong>${hills.length}</strong> total</div>
-      `;
-      renderAreaGrouped(hills, 'hills-grid', 'h', t('noHillsFound'));
-    }
-
-    function renderClimbing(routes, title) {
-      document.getElementById('climbing-stats').innerHTML = `
-        <div class="stat"><strong>${routes.length}</strong> routes</div>
-        <div class="stat"><strong>${routes.filter(r => r.grade_french >= '8').length}</strong> grade 8+</div>
-      `;
-      if (title) document.querySelector('#climbing-view .section-title').textContent = title;
-      const grid = document.getElementById('climbing-grid');
-      if (routes.length === 0) { grid.innerHTML = `<div class="empty">${t('noRoutesFound')}</div>`; return; }
-      grid.innerHTML = routes.map(r => `
-        <div class="card" onclick="openDetail('climbing', '${r.id}')">
-          <div class="card-header">
-            <div class="card-title">${lang === 'sl' && r.name_sl ? r.name_sl : r.name}</div>
-            <span class="badge badge-sport">${tActivityType(r.type)}</span>
-          </div>
-<div class="grade">${r.grade_french || r.grade_alpine || ''} <span>${r.grade_uiaa ? '/ ' + r.grade_uiaa : ''}</span></div>
-          <div class="card-meta">${r.length_m ? r.length_m + 'm' : ''} ${r.num_bolts ? '· ' + r.num_bolts + ' ' + t('bolts') : ''}</div>
-          ${cardDesc(r)}
-        </div>
-      `).join('');
-    }
-
-    function renderTrails(trails, title) {
-      const totalKm = trails.reduce((sum, t) => sum + (t.distance_km || 0), 0).toFixed(0);
-      document.getElementById('trail-stats').innerHTML = `
-        <div class="stat"><strong>${trails.length}</strong> trails</div>
-        <div class="stat"><strong>${totalKm}km</strong> total distance</div>
-      `;
-      if (title) document.querySelector('#trails-view .section-title').textContent = title;
-      const grid = document.getElementById('trails-grid');
-      if (trails.length === 0) { grid.innerHTML = `<div class="empty">${t('noTrailsFound')}</div>`; return; }
-      grid.innerHTML = trails.map(t => `
-        <div class="card" onclick="openDetail('trail', '${t.id}')">
-          <div class="card-header">
-            <div class="card-title">${lang === 'sl' && t.name_sl ? t.name_sl : t.name}</div>
-            <span class="badge badge-${t.activity_type}">${tActivityType(t.activity_type)}</span>
-          </div>
-          <div class="card-meta difficulty-${t.difficulty}">${tDifficulty(t.difficulty)}</div>
-          <div class="trail-stats">
-            <span class="trail-stat">${t.distance_km}km</span>
-            <span class="trail-stat">+${t.elevation_gain_m}m</span>
-          </div>
-          ${cardDesc(t)}
-        </div>
-      `).join('');
-    }
-
-    function filterBySummit(id, name) {
-      const routes = allClimbing.filter(r => r.summit_id === id);
-      const trails = allTrails.filter(t => t.summit_id === id);
-      if (routes.length > 0) {
-        showCategory('climbing');
-        renderClimbing(routes, `${t('sectionClimbing')} — ${name}`);
-      } else if (trails.length > 0) {
-        showCategory('hiking');
-        showTab('trails', document.querySelector('#sub-tabs .tab[data-tab="trails"]'));
-        renderTrails(trails, `${t('sectionTrails')} — ${name}`);
-      }
-    }
-
-    function handleSearch() {
-      if (!currentTab) return;
-      const q = document.getElementById('search').value.toLowerCase();
-      const matchSummit = s => s.name.toLowerCase().includes(q) || (s.description || '').toLowerCase().includes(q);
-      if (currentTab === 'summits') renderSummits(allSummits.filter(matchSummit));
-      if (currentTab === 'hills')   renderHills(allHills.filter(matchSummit));
-      if (currentTab === 'climbing') renderClimbing(allClimbing.filter(r => r.name.toLowerCase().includes(q) || r.grade_french.toLowerCase().includes(q)));
-      if (currentTab === 'trails') renderTrails(allTrails.filter(t => t.name.toLowerCase().includes(q)));
-    }
-
-    function showTab(tab, btn) {
-      currentTab = tab;
-      if (['summits', 'hills', 'trails', 'conditions'].includes(tab)) currentHikingTab = tab;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      document.getElementById('map-view').style.display = 'none';
-      document.getElementById('summits-view').style.display    = tab === 'summits'    ? 'block' : 'none';
-      document.getElementById('hills-view').style.display      = tab === 'hills'      ? 'block' : 'none';
-      document.getElementById('climbing-view').style.display   = tab === 'climbing'   ? 'block' : 'none';
-      document.getElementById('trails-view').style.display     = tab === 'trails'     ? 'block' : 'none';
-      document.getElementById('conditions-view').style.display = tab === 'conditions' ? 'block' : 'none';
-      document.getElementById('coming-soon-view').style.display = 'none';
-      if (tab === 'conditions') { loadConditions(); document.getElementById('report-btn').style.display = 'block'; }
-      document.getElementById('search').value = '';
-      if (tab === 'summits')  renderSummits(allSummits);
-      if (tab === 'hills')    renderHills(allHills);
-      if (tab === 'climbing') renderClimbing(allClimbing, t('sectionClimbing'));
-      if (tab === 'trails')   renderTrails(allTrails, t('sectionTrails'));
-    }
-
-    function showCategory(cat) {
-      currentCategory = cat;
-      document.querySelectorAll('.primary-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
-      const subTabs = document.getElementById('sub-tabs');
-      const container = document.querySelector('.container');
-      if (cat === 'map') {
-        subTabs.style.display = 'none';
-        container.style.display = 'none';
-        ['summits', 'hills', 'climbing', 'trails', 'conditions', 'coming-soon'].forEach(v =>
-          document.getElementById(v + '-view').style.display = 'none');
-        document.getElementById('map-view').style.display = 'block';
-        currentTab = 'map';
-        initMap();
-        return;
-      }
-      container.style.display = 'block';
-      document.getElementById('map-view').style.display = 'none';
-      if (cat === 'hiking') {
-        subTabs.style.display = 'flex';
-        showTab(currentHikingTab, document.querySelector(`#sub-tabs .tab[data-tab="${currentHikingTab}"]`));
-      } else if (cat === 'climbing') {
-        subTabs.style.display = 'none';
-        showTab('climbing', null);
-      } else {
-        subTabs.style.display = 'none';
-        ['summits', 'hills', 'climbing', 'trails', 'conditions'].forEach(v =>
-          document.getElementById(v + '-view').style.display = 'none');
-        document.getElementById('coming-soon-view').style.display = 'block';
-        currentTab = null;
-      }
-    }
-
-    let currentUser = null;
-    let authMode = 'login';
-
-    // ── Ticklist state ────────────────────────────────────────────
-    // Maps of itemId → ticklistRowId for the current user
-    let myTicks = { summits: {}, trails: {}, routes: {} };
-
-    async function loadMyTicks() {
-      const token = localStorage.getItem('vrh_token');
-      if (!token) return;
-      try {
-        const res = await fetch('/ticklist/check', { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) myTicks = await res.json();
-      } catch {}
-    }
-
-    async function toggleTick({ summitId, trailId, routeId, name }) {
-      const token = localStorage.getItem('vrh_token');
-      if (!token) { showModal('login'); return; }
-
-      const existing = summitId ? myTicks.summits[summitId]
-                     : trailId  ? myTicks.trails[trailId]
-                                : myTicks.routes[routeId];
-
-      if (existing) {
-        // untick
-        const res = await fetch(`/ticklist/${existing}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          if (summitId) delete myTicks.summits[summitId];
-          if (trailId)  delete myTicks.trails[trailId];
-          if (routeId)  delete myTicks.routes[routeId];
-          updateTickButton(summitId || trailId || routeId, false);
-        }
-      } else {
-        // show form to capture date + notes before saving
-        showTickForm({ summitId, trailId, routeId, name });
-      }
-    }
-
-    function showTickForm({ summitId, trailId, routeId, name }) {
-      const formEl = document.getElementById('tick-form-container');
-      if (!formEl) return;
-      formEl.style.display = 'block';
-      formEl.dataset.summitId = summitId || '';
-      formEl.dataset.trailId  = trailId  || '';
-      formEl.dataset.routeId  = routeId  || '';
-      document.getElementById('tick-form-date').value  = '';
-      document.getElementById('tick-form-notes').value = '';
-    }
-
-    async function submitTickForm() {
-      const token = localStorage.getItem('vrh_token');
-      const formEl = document.getElementById('tick-form-container');
-      const summitId = formEl.dataset.summitId || null;
-      const trailId  = formEl.dataset.trailId  || null;
-      const routeId  = formEl.dataset.routeId  || null;
-      const ascentDate = document.getElementById('tick-form-date').value  || null;
-      const notes      = document.getElementById('tick-form-notes').value || null;
-
-      const body = {
-        summit_id:         summitId || undefined,
-        trail_id:          trailId  || undefined,
-        climbing_route_id: routeId  || undefined,
-        ascent_date:       ascentDate,
-        notes
-      };
-
-      const res = await fetch('/ticklist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body)
-      });
-
-      if (res.ok) {
-        const row = await res.json();
-        if (summitId) myTicks.summits[summitId] = row.id;
-        if (trailId)  myTicks.trails[trailId]   = row.id;
-        if (routeId)  myTicks.routes[routeId]   = row.id;
-        formEl.style.display = 'none';
-        updateTickButton(summitId || trailId || routeId, true);
-      }
-    }
-
-    function cancelTickForm() {
-      const formEl = document.getElementById('tick-form-container');
-      if (formEl) formEl.style.display = 'none';
-    }
-
-    function updateTickButton(itemId, ticked) {
-      const btn = document.getElementById(`tick-btn-${itemId}`);
-      if (!btn) return;
-      if (ticked) {
-        btn.classList.add('ticked');
-        btn.innerHTML = `<span class="tick-icon">✓</span> Ticked`;
-      } else {
-        btn.classList.remove('ticked');
-        btn.innerHTML = `<span class="tick-icon">○</span> Mark as done`;
-      }
-    }
-
-    function buildTickSection({ summitId, trailId, routeId }) {
-      const itemId = summitId || trailId || routeId;
-      const ticked = summitId ? !!myTicks.summits[summitId]
-                   : trailId  ? !!myTicks.trails[trailId]
-                              : !!myTicks.routes[routeId];
-      const tickedClass = ticked ? 'ticked' : '';
-      const tickLabel   = ticked ? '✓ Ticked' : '○ Mark as done';
-      const onclickArgs = summitId ? `{summitId:'${summitId}'}`
-                        : trailId  ? `{trailId:'${trailId}'}`
-                                   : `{routeId:'${routeId}'}`;
-      return `
-        <div class="detail-section">
-          <div class="detail-section-title">${lang === 'sl' ? 'Moj seznam' : 'My List'}</div>
-          <button id="tick-btn-${itemId}" class="tick-btn ${tickedClass}"
-            onclick="toggleTick(${onclickArgs})">
-            <span class="tick-icon">${ticked ? '✓' : '○'}</span>
-            ${tickLabel}
-          </button>
-          <div id="tick-form-container" class="tick-form"
-            data-summit-id="${summitId || ''}" data-trail-id="${trailId || ''}" data-route-id="${routeId || ''}">
-            <label>Date of ascent (optional)</label>
-            <input class="form-input" type="date" id="tick-form-date" style="margin-bottom:0">
-            <label>Notes (optional)</label>
-            <textarea class="form-input" id="tick-form-notes" rows="2" style="resize:vertical;margin-bottom:0" placeholder="How did it go?"></textarea>
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="auth-btn primary" onclick="submitTickForm()">Save</button>
-              <button class="auth-btn" onclick="cancelTickForm()">Cancel</button>
-            </div>
-          </div>
-        </div>`;
-    }
-
-    // ── My Ascents overlay ────────────────────────────────────────
-
-    function handleAscentsOverlayClick(e) {
-      if (e.target === document.getElementById('ascents-overlay')) closeAscents();
-    }
-
-    function closeAscents() {
-      document.getElementById('ascents-overlay').style.display = 'none';
-    }
-
-    async function openAscents() {
-      document.getElementById('ascents-overlay').style.display = 'block';
-      document.getElementById('ascents-content').innerHTML = '<div class="loading">Loading...</div>';
-      const token = localStorage.getItem('vrh_token');
-      const res = await fetch('/ticklist/me', { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) {
-        document.getElementById('ascents-content').innerHTML = '<div class="ascents-empty">Could not load ascents.</div>';
-        return;
-      }
-      const ticks = await res.json();
-      renderAscents(ticks);
-    }
-
-    function renderAscents(ticks) {
-      const summitTicks  = ticks.filter(t => t.summit_id);
-      const trailTicks   = ticks.filter(t => t.trail_id);
-      const routeTicks   = ticks.filter(t => t.climbing_route_id);
-
-      document.getElementById('ascents-subtitle').textContent =
-        `${ticks.length} total · ${summitTicks.length} summit${summitTicks.length !== 1 ? 's' : ''} · ${trailTicks.length} trail${trailTicks.length !== 1 ? 's' : ''} · ${routeTicks.length} route${routeTicks.length !== 1 ? 's' : ''}`;
-
-      if (ticks.length === 0) {
-        document.getElementById('ascents-content').innerHTML =
-          `<div class="ascents-empty">No ascents logged yet. Open any summit, trail, or route and click "Mark as done".</div>`;
-        return;
-      }
-
-      function tickItem(t) {
-        const name = t.summit_name || t.trail_name || t.route_name || 'Unknown';
-        const nameSl = t.summit_name_sl || t.trail_name_sl || t.route_name_sl || '';
-        const displayName = lang === 'sl' && nameSl ? nameSl : name;
-        const meta = [
-          t.elevation_m ? `${t.elevation_m}m` : null,
-          t.distance_km ? `${t.distance_km}km` : null,
-          t.grade_french || t.grade_uiaa || null,
-          t.ascent_date ? new Date(t.ascent_date).toLocaleDateString() : null
-        ].filter(Boolean).join(' · ');
-        return `
-          <div class="ascent-item" id="ascent-row-${t.id}">
-            <div>
-              <div class="ascent-name">${displayName}</div>
-              ${meta ? `<div class="ascent-meta">${meta}</div>` : ''}
-              ${t.notes ? `<div class="ascent-notes">"${t.notes}"</div>` : ''}
-            </div>
-            <button class="ascent-remove" title="Remove" onclick="removeTick('${t.id}','${t.summit_id||''}','${t.trail_id||''}','${t.climbing_route_id||''}')">×</button>
-          </div>`;
-      }
-
-      let html = '';
-      if (summitTicks.length) {
-        html += `<div class="ascents-section-title">Summits & Crags (${summitTicks.length})</div>`;
-        html += summitTicks.map(tickItem).join('');
-      }
-      if (trailTicks.length) {
-        html += `<div class="ascents-section-title">Trails (${trailTicks.length})</div>`;
-        html += trailTicks.map(tickItem).join('');
-      }
-      if (routeTicks.length) {
-        html += `<div class="ascents-section-title">Climbing Routes (${routeTicks.length})</div>`;
-        html += routeTicks.map(tickItem).join('');
-      }
-      document.getElementById('ascents-content').innerHTML = html;
-    }
-
-    async function removeTick(tickId, summitId, trailId, routeId) {
-      const token = localStorage.getItem('vrh_token');
-      const res = await fetch(`/ticklist/${tickId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        if (summitId) delete myTicks.summits[summitId];
-        if (trailId)  delete myTicks.trails[trailId];
-        if (routeId)  delete myTicks.routes[routeId];
-        const row = document.getElementById(`ascent-row-${tickId}`);
-        if (row) row.remove();
-        // update subtitle count
-        const remaining = document.querySelectorAll('.ascent-item').length;
-        if (remaining === 0) {
-          document.getElementById('ascents-content').innerHTML =
-            `<div class="ascents-empty">No ascents logged yet. Open any summit, trail, or route and click "Mark as done".</div>`;
-        }
-        document.getElementById('ascents-subtitle').textContent =
-          remaining + ' total';
-      }
-    }
-
-    function showModal(mode) {
-      authMode = mode;
-      document.getElementById('modal-title').textContent = mode === 'login' ? t('loginTitle') : t('registerTitle');
-      document.getElementById('register-fields').style.display = mode === 'register' ? 'block' : 'none';
-      document.getElementById('modal-error').style.display = 'none';
-      document.getElementById('modal-overlay').style.display = 'flex';
-    }
-
-    function closeModal() {
-      document.getElementById('modal-overlay').style.display = 'none';
-      document.getElementById('auth-email').value = '';
-      document.getElementById('auth-password').value = '';
-      document.getElementById('reg-username').value = '';
-    }
-
-    async function submitAuth() {
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
-      const errorEl = document.getElementById('modal-error');
-
-      let body = { email, password };
-      if (authMode === 'register') {
-        body.username = document.getElementById('reg-username').value;
-      }
-
-      try {
-        const res = await fetch(`/auth/${authMode}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          errorEl.textContent = data.error;
-          errorEl.style.display = 'block';
-          return;
-        }
-        localStorage.setItem('vrh_token', data.token);
-        localStorage.setItem('vrh_user', JSON.stringify(data.user));
-        currentUser = data.user;
-        updateAuthUI();
-        loadMyTicks();
-        closeModal();
-      } catch (err) {
-        errorEl.textContent = 'Something went wrong, please try again.';
-        errorEl.style.display = 'block';
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem('vrh_token');
-      localStorage.removeItem('vrh_user');
-      currentUser = null;
-      myTicks = { summits: {}, trails: {}, routes: {} };
-      updateAuthUI();
-    }
-
-    function updateAuthUI() {
-      if (currentUser) {
-        document.getElementById('auth-buttons').style.display = 'none';
-        document.getElementById('user-menu').style.display = 'flex';
-        document.getElementById('username-display').textContent = `Hi, ${currentUser.username}!`;
-      } else {
-        document.getElementById('auth-buttons').style.display = 'flex';
-        document.getElementById('user-menu').style.display = 'none';
-      }
-    }
-
-    // Check if already logged in
-    const savedUser = localStorage.getItem('vrh_user');
-    if (savedUser) {
-      currentUser = JSON.parse(savedUser);
-      updateAuthUI();
-      loadMyTicks();
-    }
-    loadAll();
-    applyTranslations();
-    showCategory('hiking');
-
-    // ── Summit area expand/collapse ───────────────────────────────
-
-    function toggleAreaOverflow(areaId, hiddenCount) {
-      const panel = document.getElementById('overflow-' + areaId);
-      const btn   = document.getElementById('btn-' + areaId);
-      const expanded = panel.dataset.expanded === '1';
-
-      if (expanded) {
-        // Collapse: auto → px (reflow) → 0
-        panel.style.height = panel.scrollHeight + 'px';
-        panel.offsetHeight; // force reflow so transition fires
-        panel.style.height = '0';
-        panel.dataset.expanded = '0';
-        btn.textContent = tShowMore(hiddenCount);
-      } else {
-        // Expand: 0 → scrollHeight, then auto so resize works
-        panel.style.height = panel.scrollHeight + 'px';
-        panel.dataset.expanded = '1';
-        btn.textContent = t('showLess');
-        panel.addEventListener('transitionend', () => {
-          if (panel.dataset.expanded === '1') panel.style.height = 'auto';
-        }, { once: true });
-      }
-    }
-
-    // ── Weather helpers ───────────────────────────────────────────
-
-    const SLOVENIA_CENTER = [46.1512, 14.9955];
-
-    function getSummitCoords(summit) {
-      if (summit.lat != null && summit.lng != null) return [summit.lat, summit.lng];
-      const hc = HARDCODED_COORDS[summit.name] || HARDCODED_COORDS[summit.name_sl];
-      return hc || SLOVENIA_CENTER;
-    }
-
-    // Maps summit name (lowercase) → ARSO station
-    const ARSO_STATION_MAP = {
-      'triglav':           { id: 'KREDA-ICA', label: 'Kredarica' },
-      'škrlatica':         { id: 'KREDA-ICA', label: 'Kredarica' },
-      'mangart':           { id: 'KREDA-ICA', label: 'Kredarica' },
-      'jalovec':           { id: 'KREDA-ICA', label: 'Kredarica' },
-      'kanjavec':          { id: 'KREDA-ICA', label: 'Kredarica' },
-      'razor':             { id: 'KREDA-ICA', label: 'Kredarica' },
-      'prisojnik':         { id: 'KREDA-ICA', label: 'Kredarica' },
-      'vogel':             { id: 'VOGEL',     label: 'Vogel' },
-      'bogatin':           { id: 'VOGEL',     label: 'Vogel' },
-      'črna prst':         { id: 'VOGEL',     label: 'Vogel' },
-      'veliki draški vrh': { id: 'VOGEL',     label: 'Vogel' },
-      'stol':              { id: 'RATECE',    label: 'Rateče' },
-      'kepa':              { id: 'RATECE',    label: 'Rateče' },
-      'golica':            { id: 'RATECE',    label: 'Rateče' },
-      'grintovec':         { id: 'LISCA',     label: 'Lisca' },
-      'skuta':             { id: 'LISCA',     label: 'Lisca' },
-      'kočna':             { id: 'LISCA',     label: 'Lisca' },
-      'ojstrica':          { id: 'LISCA',     label: 'Lisca' },
-      'brana':             { id: 'LISCA',     label: 'Lisca' },
-      'storžič':           { id: 'LISCA',     label: 'Lisca' },
-    };
-
-    function wmoCondition(code) {
-      if (code === 0)  return { emoji: '☀️',  en: 'Clear sky',      sl: 'Jasno' };
-      if (code <= 3)   return { emoji: '⛅',  en: 'Partly cloudy',  sl: 'Delno oblačno' };
-      if (code <= 48)  return { emoji: '🌫️', en: 'Foggy',           sl: 'Megleno' };
-      if (code <= 55)  return { emoji: '🌦️', en: 'Drizzle',         sl: 'Rosenje' };
-      if (code <= 67)  return { emoji: '🌧️', en: 'Rainy',           sl: 'Deževno' };
-      if (code <= 77)  return { emoji: '❄️',  en: 'Snowy',           sl: 'Snežno' };
-      if (code <= 82)  return { emoji: '🌦️', en: 'Showers',         sl: 'Plohe' };
-      if (code <= 86)  return { emoji: '🌨️', en: 'Snow showers',    sl: 'Snežne plohe' };
-      return           { emoji: '⛈️',  en: 'Thunderstorm',           sl: 'Nevihta' };
-    }
-
-    // Map ARSO Slovenian description text to an emoji
-    function descToEmoji(desc) {
-      if (!desc) return '🌡️';
-      const d = desc.toLowerCase();
-      if (d.includes('jasno') || d.includes('clear'))             return '☀️';
-      if (d.includes('delno oblačno') || d.includes('partly'))    return '⛅';
-      if (d.includes('oblačno') || d.includes('cloud'))           return '☁️';
-      if (d.includes('megla') || d.includes('fog'))               return '🌫️';
-      if (d.includes('snežne plohe') || d.includes('snow show'))  return '🌨️';
-      if (d.includes('sneg') || d.includes('snow'))               return '❄️';
-      if (d.includes('nevihta') || d.includes('thunder'))         return '⛈️';
-      if (d.includes('ploha') || d.includes('shower'))            return '🌦️';
-      if (d.includes('dež') || d.includes('rain') || d.includes('drizzle')) return '🌧️';
-      return '🌡️';
-    }
-
-    async function fetchWeather(summit) {
-      const key     = (summit.name || '').toLowerCase().trim();
-      const station = ARSO_STATION_MAP[key];
-
-      if (station) {
-        try {
-          const res = await fetch(`/weather/arso/${station.id}`);
-          if (res.ok) return await res.json();
-        } catch {}
-        // ARSO failed — fall through to Open-Meteo
-      }
-
-      const [lat, lng] = getSummitCoords(summit);
-      const res = await fetch(`/weather/fallback?lat=${lat}&lon=${lng}`);
-      if (!res.ok) throw new Error('Weather unavailable');
-      return await res.json();
-    }
-
-    function buildWeatherHtml(weather) {
-      const unavail = lang === 'sl' ? 'Vreme ni na voljo.' : 'Weather data unavailable.';
-      if (!weather) return `<div class="weather-widget"><div class="weather-unavail">${unavail}</div></div>`;
-
-      // Resolve description text + emoji
-      let descText, emoji;
-      if (weather.source === 'openmeteo' && weather.weathercode != null) {
-        const cond = wmoCondition(weather.weathercode);
-        descText = lang === 'sl' ? cond.sl : cond.en;
-        emoji    = cond.emoji;
-      } else {
-        descText = weather.description || (lang === 'sl' ? 'Ni podatka' : 'No data');
-        emoji    = descToEmoji(weather.description);
-      }
-
-      // i18n labels
-      const lbl = {
-        wind:     lang === 'sl' ? 'Veter'              : 'Wind',
-        humidity: lang === 'sl' ? 'Vlažnost'           : 'Humidity',
-        updated:  lang === 'sl' ? 'Zadnja posodobitev' : 'Last updated',
-        source:   lang === 'sl' ? 'Vir podatkov'       : 'Data source',
-      };
-
-      // Format timestamp
-      let updatedStr = '';
-      if (weather.updated_at) {
-        try {
-          updatedStr = new Date(weather.updated_at).toLocaleTimeString(
-            lang === 'sl' ? 'sl-SI' : 'en-GB',
-            { hour: '2-digit', minute: '2-digit' }
-          );
-        } catch {}
-      }
-
-      const windVal  = weather.wind_speed != null ? `${weather.wind_speed} km/h` : '—';
-      const humidRow = weather.humidity   != null
-        ? `<div class="weather-meta-row">
-             <span class="weather-meta-label">${lbl.humidity}</span>
-             <span class="weather-meta-val">${Math.round(weather.humidity)}%</span>
-           </div>`
-        : '';
-
-      const badgeClass = weather.source === 'openmeteo' ? 'weather-source-badge source-openmeteo' : 'weather-source-badge';
-      const sourceLabel = weather.source_label || 'Open-Meteo';
-
-      return `
-        <div class="weather-widget">
-          <div class="weather-top">
-            <span class="weather-emoji">${emoji}</span>
-            <div>
-              <div class="weather-temp">${Math.round(weather.temperature)}°C</div>
-              <div class="weather-condition-label">${descText}</div>
-            </div>
-            <div class="weather-wind">
-              <div class="weather-wind-label">${lbl.wind}</div>
-              <div class="weather-wind-val">${windVal}</div>
-            </div>
-          </div>
-          ${humidRow}
-          <div class="weather-footer">
-            <span class="${badgeClass}">${sourceLabel}</span>
-            ${updatedStr ? `<span class="weather-updated">${lbl.updated}: ${updatedStr}</span>` : ''}
-          </div>
-        </div>`;
-    }
-
-    // ── Summit detail panel ───────────────────────────────────────
-
-    async function openSummitDetail(summitId) {
-      detailType = 'summit';
-      detailId = summitId;
-      const overlay = document.getElementById('detail-overlay');
-      overlay.style.display = 'block';
-      overlay.scrollTop = 0;
-      document.getElementById('detail-content').innerHTML = '<div class="loading">Loading...</div>';
-
-      const summit = [...allSummits, ...allHills].find(s => s.id === summitId);
-      if (!summit) {
-        document.getElementById('detail-content').innerHTML = '<div class="empty">Summit not found.</div>';
-        return;
-      }
-
-      let weather = null;
-      try { weather = await fetchWeather(summit); } catch {}
-
-      renderSummitDetailContent(summit, weather);
-    }
-
-    function renderSummitDetailContent(summit, weather) {
-      const displayName = lang === 'sl' && summit.name_sl ? summit.name_sl : summit.name;
-      const summitTrails  = allTrails.filter(t => t.summit_id === summit.id);
-      const summitRoutes  = allClimbing.filter(r => r.summit_id === summit.id);
-
-      const trailsHtml = summitTrails.length === 0 ? '' : `
-        <div class="detail-section">
-          <div class="detail-section-title">${t('sectionTrails')}</div>
-          <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px">
-            ${summitTrails.map(tr => `
-              <div class="card" onclick="openDetail('trail','${tr.id}')">
-                <div class="card-title" style="font-size:14px">${lang === 'sl' && tr.name_sl ? tr.name_sl : tr.name}</div>
-                <div class="card-meta difficulty-${tr.difficulty}">${tDifficulty(tr.difficulty)}</div>
-                ${tr.distance_km ? `<div class="card-meta">${tr.distance_km}km · +${tr.elevation_gain_m || 0}m</div>` : ''}
-              </div>`).join('')}
-          </div>
-        </div>`;
-
-      const routesHtml = summitRoutes.length === 0 ? '' : `
-        <div class="detail-section">
-          <div class="detail-section-title">${t('sectionClimbing')}</div>
-          <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px">
-            ${summitRoutes.map(r => `
-              <div class="card" onclick="openDetail('climbing','${r.id}')">
-                <div class="card-title" style="font-size:14px">${lang === 'sl' && r.name_sl ? r.name_sl : r.name}</div>
-                <div class="grade">${r.grade_french || r.grade_alpine || ''}</div>
-              </div>`).join('')}
-          </div>
-        </div>`;
-
-      document.getElementById('detail-content').innerHTML = `
-        <div class="card-header" style="margin-bottom:8px">
-          <div class="detail-name">${displayName}</div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-            <span class="badge badge-${summit.type}">${summit.type}</span>
-            ${summitDiffBadge(summit)}
-          </div>
-        </div>
-        <div class="detail-meta-row">
-          <div class="detail-meta-item"><span class="val">${summit.elevation_m}m</span>${lang === 'sl' ? 'Višina' : 'Elevation'}</div>
-          ${summit.area_name ? `<div class="detail-meta-item"><span class="val">${summit.area_name}</span>${lang === 'sl' ? 'Območje' : 'Area'}</div>` : ''}
-        </div>
-
-        ${buildTickSection({ summitId: summit.id })}
-
-        <div class="detail-section" style="margin-top:18px">
-          <div class="detail-section-title">${lang === 'sl' ? 'Vreme' : 'Weather'}</div>
-          ${buildWeatherHtml(weather)}
-        </div>
-
-        ${desc(summit) ? `<div class="detail-desc" style="margin-top:20px">${desc(summit)}</div>` : ''}
-
-        ${trailsHtml}
-        ${routesHtml}
-      `;
-    }
-
-    // ── Detail panel ──────────────────────────────────────────────
-
-    let detailType = null;
-    let detailId = null;
-
-    function handleDetailOverlayClick(e) {
-      if (e.target === document.getElementById('detail-overlay')) closeDetail();
-    }
-
-    function closeDetail() {
-      document.getElementById('detail-overlay').style.display = 'none';
-      detailType = null;
-      detailId = null;
-    }
-
-    async function openDetail(type, id) {
-      detailType = type;
-      detailId = id;
-      const overlay = document.getElementById('detail-overlay');
-      overlay.style.display = 'block';
-      overlay.scrollTop = 0;
-      document.getElementById('detail-content').innerHTML = '<div class="loading">Loading...</div>';
-
-      const base = type === 'climbing' ? 'climbing-routes' : 'trails';
-      const condBase = type === 'climbing' ? 'climbing' : 'trail';
-      const [itemRes, condRes, photoRes] = await Promise.all([
-        fetch(`/${base}/${id}`),
-        fetch(`/conditions/${condBase}/${id}`),
-        fetch(`/photos/${condBase}/${id}`)
-      ]);
-
-      const item = await itemRes.json();
-      const conditions = condRes.ok ? await condRes.json() : [];
-      const photos = photoRes.ok ? await photoRes.json() : [];
-      renderDetailContent(type, item, conditions, photos);
-    }
-
-    function renderDetailContent(type, item, conditions, photos) {
-      const isClimbing = type === 'climbing';
-      const token = localStorage.getItem('vrh_token');
-
-      const gradesHtml = isClimbing ? `
-        <div class="detail-grades">
-          ${item.grade_french ? `<div class="detail-grade-block"><div class="detail-grade-label">French</div><span class="detail-grade-value">${item.grade_french}</span></div>` : ''}
-          ${item.grade_uiaa   ? `<div class="detail-grade-block"><div class="detail-grade-label">UIAA</div><span class="detail-grade-value">${item.grade_uiaa}</span></div>` : ''}
-          ${item.grade_alpine ? `<div class="detail-grade-block"><div class="detail-grade-label">Alpine</div><span class="detail-grade-value">${item.grade_alpine}</span></div>` : ''}
-        </div>` : '';
-
-      const metaHtml = isClimbing ? `
-        <div class="detail-meta-row">
-          ${item.length_m   ? `<div class="detail-meta-item"><span class="val">${item.length_m}m</span>Length</div>` : ''}
-          ${item.num_bolts  ? `<div class="detail-meta-item"><span class="val">${item.num_bolts}</span>${t('bolts')}</div>` : ''}
-          ${item.rock_type  ? `<div class="detail-meta-item"><span class="val">${item.rock_type}</span>Rock</div>` : ''}
-          <div class="detail-meta-item"><span class="val">${tActivityType(item.type)}</span>Type</div>
-        </div>` : `
-        <div class="detail-meta-row">
-          <div class="detail-meta-item difficulty-${item.difficulty}"><span class="val">${tDifficulty(item.difficulty)}</span>Difficulty</div>
-          ${item.distance_km      ? `<div class="detail-meta-item"><span class="val">${item.distance_km}km</span>Distance</div>` : ''}
-          ${item.elevation_gain_m ? `<div class="detail-meta-item"><span class="val">+${item.elevation_gain_m}m</span>Elevation</div>` : ''}
-          <div class="detail-meta-item"><span class="val">${tActivityType(item.activity_type)}</span>Activity</div>
-        </div>`;
-
-      const badgeClass = isClimbing ? 'badge-sport' : `badge-${item.activity_type}`;
-      const badgeText  = isClimbing ? tActivityType(item.type) : tActivityType(item.activity_type);
-
-      const conditionsHtml = conditions.length === 0
-        ? '<div style="color:#555;font-size:13px">No conditions reports yet.</div>'
-        : `<div class="conditions-list">${conditions.map(c => `
-            <div class="condition-item">
-              <span class="cond-status status-${c.status}">${c.status}</span>
-              ${c.notes ? `<div class="cond-notes">${c.notes}</div>` : ''}
-              <div class="cond-meta">Reported by ${c.username} &middot; ${new Date(c.reported_at).toLocaleDateString()}</div>
-            </div>`).join('')}
-          </div>`;
-
-      const photosHtml = photos.length === 0
-        ? '<div style="color:#555;font-size:13px">No photos yet.</div>'
-        : `<div class="photos-grid">${photos.map(p => `
-            <div class="photo-item">
-              <img src="${p.url}" alt="${p.caption || ''}">
-              ${p.caption ? `<div class="photo-caption">${p.caption}</div>` : ''}
-            </div>`).join('')}
-          </div>`;
-
-      const condFormHtml = token ? `
-        <button class="auth-btn" onclick="document.getElementById('detail-cond-form').style.display='block';this.style.display='none'" style="margin-top:12px">+ Add report</button>
-        <div id="detail-cond-form" class="detail-inline-form" style="display:none">
-          <select class="form-input" id="detail-cond-status">
-            <option value="good">${t('statusGood')}</option>
-            <option value="fair">${t('statusFair')}</option>
-            <option value="poor">${t('statusPoor')}</option>
-            <option value="closed">${t('statusClosed')}</option>
-          </select>
-          <textarea class="form-input" id="detail-cond-notes" placeholder="Describe the conditions..." rows="2" style="resize:vertical"></textarea>
-          <button class="auth-btn primary" onclick="submitDetailConditions()">Submit</button>
-          <button class="auth-btn" onclick="document.getElementById('detail-cond-form').style.display='none'" style="margin-left:8px">Cancel</button>
-        </div>` : '<div style="color:#555;font-size:12px;margin-top:10px">Log in to add a conditions report.</div>';
-
-      const photoFormHtml = token ? `
-        <button class="auth-btn" onclick="document.getElementById('detail-photo-form').style.display='block';this.style.display='none'" style="margin-top:12px">+ Upload photo</button>
-        <div id="detail-photo-form" class="detail-inline-form" style="display:none">
-          <label class="upload-area" for="detail-photo-input">
-            <div style="color:#666;font-size:14px">Click to select a photo</div>
-            <div id="detail-photo-name" style="color:#888;font-size:12px;margin-top:4px"></div>
-            <input type="file" id="detail-photo-input" accept="image/*" onchange="handlePhotoSelect()">
-          </label>
-          <input class="form-input" type="text" id="detail-photo-caption" placeholder="Caption (optional)" style="margin-top:8px">
-          <button class="auth-btn primary" onclick="submitDetailPhoto()" style="margin-top:4px">Upload</button>
-          <button class="auth-btn" onclick="document.getElementById('detail-photo-form').style.display='none'" style="margin-left:8px">Cancel</button>
-        </div>` : '<div style="color:#555;font-size:12px;margin-top:10px">Log in to upload photos.</div>';
-
-      const tickSectionHtml = isClimbing
-        ? buildTickSection({ routeId: item.id })
-        : buildTickSection({ trailId: item.id });
-
-      document.getElementById('detail-content').innerHTML = `
-        <div class="card-header" style="margin-bottom:6px">
-          <div class="detail-name">${lang === 'sl' && item.name_sl ? item.name_sl : item.name}</div>
-          <span class="badge ${badgeClass}">${badgeText}</span>
-        </div>
-        ${gradesHtml}
-        ${metaHtml}
-        ${desc(item) ? `<div class="detail-desc">${desc(item)}</div>` : ''}
-
-        ${tickSectionHtml}
-
-        <div class="detail-section">
-          <div class="detail-section-title">Conditions reports</div>
-          ${conditionsHtml}
-          ${condFormHtml}
-        </div>
-
-        <div class="detail-section">
-          <div class="detail-section-title">Photos</div>
-          ${photosHtml}
-          ${photoFormHtml}
-        </div>`;
-    }
-
-    function handlePhotoSelect() {
-      const file = document.getElementById('detail-photo-input').files[0];
-      if (file) document.getElementById('detail-photo-name').textContent = file.name;
-    }
-
-    async function submitDetailConditions() {
-      const token = localStorage.getItem('vrh_token');
-      const body = {
-        status: document.getElementById('detail-cond-status').value,
-        notes: document.getElementById('detail-cond-notes').value,
-        trail_id: detailType === 'trail' ? detailId : null,
-        climbing_route_id: detailType === 'climbing' ? detailId : null
-      };
-      const res = await fetch('/conditions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(body)
-      });
-      if (res.ok) openDetail(detailType, detailId);
-    }
-
-    // ── Map view ──────────────────────────────────────────────────
-
-    let map = null;
-    let mapMarkers = [];
-    let mapFilters = { peak: true, crag: true, hill: true };
-
-    // Approximate coordinates for summits not yet in the database
-    const HARDCODED_COORDS = {
-      'Triglav':    [46.3794, 13.8369],
-      'Mangart':    [46.4494, 13.6697],
-      'Jalovec':    [46.4131, 13.7178],
-      'Škrlatica':  [46.3897, 13.8628],
-      'Kanjavec':   [46.3619, 13.8014],
-      'Razor':      [46.3756, 13.7681],
-      'Prisojnik':  [46.3981, 13.7397],
-      'Grintovec':  [46.3706, 14.5297],
-      'Skuta':      [46.3542, 14.4936],
-      'Kočna':      [46.3897, 14.4628],
-      'Ojstrica':   [46.3394, 14.5178],
-      'Brana':      [46.3544, 14.4628],
-      'Planjava':   [46.3461, 14.5019],
-      'Storžič':    [46.3997, 14.2897],
-      'Stol':       [46.4894, 14.0897],
-      'Košuta':     [46.4594, 14.3997],
-      'Kepa':       [46.4897, 13.9197],
-      'Golica':     [46.4694, 13.9997],
-      'Osp':        [45.5731, 13.8697],
-      'Misja Pec':  [45.5631, 13.8597],
-      'Misja Peč':  [45.5631, 13.8597],
-    };
-
-    function makeIcon(type) {
-      if (type === 'peak') {
-        // Upward triangle for high peaks (green)
-        return L.divIcon({
-          className: '',
-          html: `<div style="width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:16px solid #4ade80;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7))"></div>`,
-          iconSize: [18, 16],
-          iconAnchor: [9, 16],
-          popupAnchor: [0, -18],
-          tooltipAnchor: [0, -18]
-        });
-      }
-      if (type === 'hill') {
-        // Small teal circle for hills
-        return L.divIcon({
-          className: '',
-          html: `<div style="width:10px;height:10px;border-radius:50%;background:#2dd4bf;border:2px solid rgba(0,0,0,0.45);box-shadow:0 1px 3px rgba(0,0,0,0.5)"></div>`,
-          iconSize: [10, 10],
-          iconAnchor: [5, 5],
-          popupAnchor: [0, -8],
-          tooltipAnchor: [0, -8]
-        });
-      }
-      // Rotated square (diamond) for crags (orange)
-      return L.divIcon({
-        className: '',
-        html: `<div style="width:12px;height:12px;background:#f97316;border:2px solid rgba(0,0,0,0.45);box-shadow:0 1px 3px rgba(0,0,0,0.5);transform:rotate(45deg)"></div>`,
-        iconSize: [12, 12],
-        iconAnchor: [6, 6],
-        popupAnchor: [0, -10],
-        tooltipAnchor: [0, -10]
-      });
-    }
-
-    function initMap() {
-      if (map) {
-        map.invalidateSize();
-        updateMapMarkers();
-        return;
-      }
-      map = L.map('map-container', { zoomControl: true }).setView([46.1, 14.5], 8);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19
-      }).addTo(map);
-      updateMapMarkers();
-    }
-
-    function updateMapMarkers() {
-      mapMarkers.forEach(m => map.removeLayer(m));
-      mapMarkers = [];
-
-      const allItems = [
-        ...allSummits.map(s => ({ ...s, _mapType: s.type === 'crag' ? 'crag' : 'peak' })),
-        ...allHills.map(s => ({ ...s, _mapType: 'hill' }))
-      ];
-
-      let shown = 0;
-      for (const item of allItems) {
-        // Use DB coordinates if available, fall back to hardcoded
-        let lat = item.lat, lng = item.lng;
-        if (lat == null || lng == null) {
-          const hc = HARDCODED_COORDS[item.name] || HARDCODED_COORDS[item.name_sl];
-          if (hc) { lat = hc[0]; lng = hc[1]; }
-        }
-        if (lat == null || lng == null) continue;
-
-        const filterKey = item._mapType;
-        if (!mapFilters[filterKey]) continue;
-
-        const displayName = lang === 'sl' && item.name_sl ? item.name_sl : item.name;
-        const typeLabel = item._mapType === 'crag' ? 'Crag' : item._mapType === 'hill' ? 'Hill' : 'Peak';
-        const descFull = lang === 'sl' && item.description_sl ? item.description_sl : item.description;
-        const descShort = descFull ? (descFull.length > 120 ? descFull.slice(0, 120) + '…' : descFull) : '';
-        const trailCount = allTrails.filter(t => t.summit_id === item.id).length;
-        const routeCount = allClimbing.filter(r => r.summit_id === item.id).length;
-
-        const marker = L.marker([lat, lng], { icon: makeIcon(item._mapType) });
-
-        // Hover tooltip — lightweight, just name + elevation + type
-        marker.bindTooltip(
-          `<div class="map-tooltip-name">${displayName}</div>` +
-          `<div class="map-tooltip-meta">${item.elevation_m}m · ${typeLabel}</div>`,
-          { direction: 'top', offset: [0, -4] }
-        );
-
-        // Click popup — full info card
-        const safeName = displayName.replace(/'/g, "\\'");
-        marker.bindPopup(`
-          <div class="map-popup-name">${displayName}</div>
-          <div class="map-popup-meta">${item.elevation_m}m &middot; ${typeLabel}</div>
-          ${descShort ? `<div class="map-popup-desc">${descShort}</div>` : ''}
-          <div class="map-popup-counts">
-            <span>🥾 ${trailCount} trail${trailCount !== 1 ? 's' : ''}</span>
-            ${routeCount > 0 || item._mapType === 'crag' ? `<span>🧗 ${routeCount} route${routeCount !== 1 ? 's' : ''}</span>` : ''}
-          </div>
-          <button class="map-popup-btn" onclick="mapGoToSummit('${item.id}')">View details</button>
-        `, { minWidth: 190, maxWidth: 250 });
-
-        marker.addTo(map);
-        mapMarkers.push(marker);
-        shown++;
-      }
-
-      document.getElementById('map-count').textContent = `${shown} location${shown !== 1 ? 's' : ''} shown`;
-    }
-
-    function toggleMapFilter(type) {
-      mapFilters[type] = !mapFilters[type];
-      document.getElementById('mf-' + type).classList.toggle('active', mapFilters[type]);
-      updateMapMarkers();
-    }
-
-    function renderMap() {
-      if (map) updateMapMarkers();
-    }
-
-    function mapGoToSummit(id) {
-      map.closePopup();
-      openSummitDetail(id);
-    }
-
-    async function submitDetailPhoto() {
-      const token = localStorage.getItem('vrh_token');
-      const file = document.getElementById('detail-photo-input').files[0];
-      if (!file) return;
-      const caption = document.getElementById('detail-photo-caption').value;
-      const formData = new FormData();
-      formData.append('photo', file);
-      if (caption) formData.append('caption', caption);
-      const endpoint = detailType === 'climbing'
-        ? `/photos/climbing/${detailId}`
-        : `/photos/trail/${detailId}`;
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      if (res.ok) openDetail(detailType, detailId);
-    }
-  </script>
+    ${gradesHtml}${metaHtml}
+    ${desc(item)?`<div class="detail-desc">${desc(item)}</div>`:''}
+    ${buildTickSection({routeId:item.id})}
+    <div class="detail-section">
+      <div class="detail-section-title">Conditions reports</div>
+      ${conditionsListHtml(conditions)}${condFormHtml}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Photos</div>
+      ${photosListHtml(photos)}${photoFormHtml}
+    </div>`;
+}
+
+async function submitDetailConditions() {
+  const token=localStorage.getItem('vrh_token');
+  const body={status:document.getElementById('detail-cond-status').value,notes:document.getElementById('detail-cond-notes').value,climbing_route_id:detailId};
+  const res=await fetch(`${API}/conditions`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify(body)});
+  if(res.ok) openDetail(detailType,detailId);
+}
+
+async function submitDetailPhoto() {
+  const token=localStorage.getItem('vrh_token');
+  const file=document.getElementById('detail-photo-input').files[0]; if(!file) return;
+  const caption=document.getElementById('detail-photo-caption').value;
+  const fd=new FormData(); fd.append('photo',file); if(caption) fd.append('caption',caption);
+  const res=await fetch(`${API}/photos/climbing/${detailId}`,{method:'POST',headers:{Authorization:`Bearer ${token}`},body:fd});
+  if(res.ok) openDetail(detailType,detailId);
+}
+
+// ── Map ───────────────────────────────────────────────────────
+function renderMapPage() {
+  ensureDataLoaded().then(()=>initMap());
+}
+
+function makeIcon(type) {
+  if(type==='peak') return L.divIcon({className:'',html:`<div style="width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:16px solid #4ade80;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7))"></div>`,iconSize:[18,16],iconAnchor:[9,16],popupAnchor:[0,-18],tooltipAnchor:[0,-18]});
+  if(type==='hill') return L.divIcon({className:'',html:`<div style="width:10px;height:10px;border-radius:50%;background:#2dd4bf;border:2px solid rgba(0,0,0,0.45);box-shadow:0 1px 3px rgba(0,0,0,0.5)"></div>`,iconSize:[10,10],iconAnchor:[5,5],popupAnchor:[0,-8],tooltipAnchor:[0,-8]});
+  return L.divIcon({className:'',html:`<div style="width:12px;height:12px;background:#f97316;border:2px solid rgba(0,0,0,0.45);box-shadow:0 1px 3px rgba(0,0,0,0.5);transform:rotate(45deg)"></div>`,iconSize:[12,12],iconAnchor:[6,6],popupAnchor:[0,-10],tooltipAnchor:[0,-10]});
+}
+
+function initMap() {
+  if (leafletMap) { leafletMap.invalidateSize(); updateMapMarkers(); return; }
+  leafletMap = L.map('map-container',{zoomControl:true}).setView([46.1,14.5],8);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',subdomains:'abcd',maxZoom:19}).addTo(leafletMap);
+  updateMapMarkers();
+}
+
+function updateMapMarkers() {
+  mapMarkers.forEach(m=>leafletMap.removeLayer(m)); mapMarkers=[];
+  const all=[...allSummits.map(s=>({...s,_mt:s.type==='crag'?'crag':'peak'})),...allHills.map(s=>({...s,_mt:'hill'}))];
+  let shown=0;
+  for (const item of all) {
+    let lat=item.lat,lng=item.lng;
+    if(lat==null||lng==null){const hc=HARDCODED_COORDS[item.name]||HARDCODED_COORDS[item.name_sl];if(hc){lat=hc[0];lng=hc[1];}}
+    if(lat==null||lng==null) continue;
+    if(!mapFilters[item._mt]) continue;
+    const dn=iname(item);
+    const typeLabel=item._mt==='crag'?'Crag':item._mt==='hill'?'Hill':'Peak';
+    const trailC=allTrails.filter(t=>t.summit_id===item.id).length;
+    const routeC=allClimbing.filter(r=>r.summit_id===item.id).length;
+    const marker=L.marker([lat,lng],{icon:makeIcon(item._mt)});
+    marker.bindTooltip(`<div class="map-tooltip-name">${dn}</div><div class="map-tooltip-meta">${item.elevation_m}m · ${typeLabel}</div>`,{direction:'top',offset:[0,-4]});
+    marker.bindPopup(`<div class="map-popup-name">${dn}</div><div class="map-popup-meta">${item.elevation_m}m · ${typeLabel}</div><div class="map-popup-counts"><span>🥾 ${trailC} trail${trailC!==1?'s':''}</span>${routeC>0||item._mt==='crag'?`<span>🧗 ${routeC} route${routeC!==1?'s':''}</span>`:''}</div><button class="map-popup-btn" onclick="mapGoTo('${item.id}','${item._mt}','${toSlug(item.name)}')">View details</button>`,{minWidth:190,maxWidth:250});
+    marker.addTo(leafletMap); mapMarkers.push(marker); shown++;
+  }
+  const el=document.getElementById('map-count'); if(el) el.textContent=`${shown} location${shown!==1?'s':''} shown`;
+}
+
+function toggleMapFilter(type) {
+  mapFilters[type]=!mapFilters[type];
+  document.getElementById('mf-'+type).classList.toggle('active',mapFilters[type]);
+  updateMapMarkers();
+}
+
+function mapGoTo(id, mapType, slug) {
+  leafletMap.closePopup();
+  if(mapType==='crag') navigate('/climbing/'+slug);
+  else navigate('/summit/'+slug);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+const savedUser = localStorage.getItem('vrh_user');
+if (savedUser) { currentUser=JSON.parse(savedUser); updateAuthUI(); loadMyTicks(); }
+applyTranslations();
+loadAll();
+route();
+</script>
 </body>
 </html>

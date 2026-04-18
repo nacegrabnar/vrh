@@ -10,7 +10,8 @@ const conditionsRouter = require('./routes/conditions');
 const photosRouter = require('./routes/photos');
 const { router: adminRouter } = require('./routes/admin');
 const ticklistRouter = require('./routes/ticklist');
-const weatherRouter  = require('./routes/weather');
+const weatherRouter = require('./routes/weather');
+const areasRouter = require('./routes/areas');
 const path = require('path');
 
 const app = express();
@@ -18,24 +19,29 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('client'));
+app.use(express.static(path.join(__dirname, '../client')));
 
-app.get('/api', (req, res) => {
-  res.json({ message: 'Welcome to Vrh API! 🏔️' });
-});
+// API routes (all under /api/)
+app.get('/api', (req, res) => res.json({ message: 'Na Vrh API 🏔️' }));
+app.use('/api/summits', summitsRouter);
+app.use('/api/climbing-routes', climbingRoutesRouter);
+app.use('/api/trails', trailsRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/conditions', conditionsRouter);
+app.use('/api/photos', photosRouter);
+app.use('/api/ticklist', ticklistRouter);
+app.use('/api/weather', weatherRouter);
+app.use('/api/areas', areasRouter);
 
-app.use('/summits', summitsRouter);
-app.use('/climbing-routes', climbingRoutesRouter);
-app.use('/trails', trailsRouter);
-app.use('/auth', authRouter);
-app.use('/conditions', conditionsRouter);
-app.use('/photos', photosRouter);
+// Admin panel (keep at /admin-api for admin.html)
 app.use('/admin-api', adminRouter);
-app.use('/ticklist', ticklistRouter);
-app.use('/weather',  weatherRouter);
-
 app.get('/admin', (_req, res) => {
   res.sendFile(path.join(__dirname, '../client/admin.html'));
+});
+
+// Catch-all: serve index.html for all page routes (SPA client-side routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
 app.listen(PORT, () => {

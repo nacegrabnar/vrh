@@ -615,7 +615,7 @@
       const btn = document.querySelector('#panel-summit .btn-submit');
       btn.disabled = true;
       try {
-        const res = await fetch('/summits', {
+        const res = await fetch('/api/summits', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -649,7 +649,7 @@
       const btn = document.querySelector('#panel-climbing .btn-submit');
       btn.disabled = true;
       try {
-        const res = await fetch('/climbing-routes', {
+        const res = await fetch('/api/climbing-routes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -687,7 +687,7 @@
       const btn = document.querySelector('#panel-trail .btn-submit');
       btn.disabled = true;
       try {
-        const res = await fetch('/trails', {
+        const res = await fetch('/api/trails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
