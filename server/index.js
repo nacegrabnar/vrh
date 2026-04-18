@@ -40,7 +40,7 @@ app.get('/admin', (_req, res) => {
 });
 
 // Catch-all: serve index.html for all page routes (SPA client-side routing)
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
