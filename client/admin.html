@@ -125,6 +125,69 @@
     .auth-btn:hover { border-color: #555; color: #fff; }
     .auth-btn.primary { background: #fff; color: #000; border-color: #fff; }
     .auth-btn.primary:hover { background: #ddd; }
+
+    /* ── Trail review table ── */
+    .review-stats {
+      display: flex; gap: 20px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .stat-box {
+      padding: 14px 20px; border-radius: 10px; border: 1px solid #2a2d36;
+      background: #1a1d26; min-width: 120px;
+    }
+    .stat-box .stat-val { font-size: 28px; font-weight: 700; }
+    .stat-box .stat-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    .stat-box.approved .stat-val { color: #4ade80; }
+    .stat-box.rejected .stat-val { color: #f87171; }
+    .stat-box.pending  .stat-val { color: #f59e0b; }
+
+    .review-filters {
+      display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+    }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 6px; border: 1px solid #2a2d36;
+      background: none; color: #666; font-size: 12px; cursor: pointer; transition: all 0.15s;
+    }
+    .filter-btn:hover { border-color: #444; color: #aaa; }
+    .filter-btn.active { border-color: #f59e0b; color: #f59e0b; background: #f59e0b11; }
+
+    .review-search {
+      flex: 1; min-width: 180px; max-width: 300px;
+      padding: 6px 12px; border-radius: 6px; border: 1px solid #2a2d36;
+      background: #0f1117; color: #fff; font-size: 13px; outline: none;
+    }
+    .review-search:focus { border-color: #3a3d46; }
+
+    .trail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .trail-table th {
+      text-align: left; padding: 8px 12px; border-bottom: 1px solid #1e2130;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #444;
+    }
+    .trail-table td { padding: 9px 12px; border-bottom: 1px solid #14161e; vertical-align: middle; }
+    .trail-table tr:hover td { background: #ffffff04; }
+
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .badge-approved { background: #4ade8022; color: #4ade80; border: 1px solid #4ade8044; }
+    .badge-rejected { background: #f8717122; color: #f87171; border: 1px solid #f8717144; }
+    .badge-pending  { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b44; }
+
+    .action-btns { display: flex; gap: 6px; }
+    .btn-approve, .btn-reject, .btn-pending {
+      padding: 4px 10px; border-radius: 5px; border: none; font-size: 11px;
+      font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    }
+    .btn-approve { background: #4ade8022; color: #4ade80; border: 1px solid #4ade8044; }
+    .btn-approve:hover { background: #4ade8044; }
+    .btn-reject  { background: #f8717122; color: #f87171; border: 1px solid #f8717144; }
+    .btn-reject:hover  { background: #f8717144; }
+    .btn-pending { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b44; }
+    .btn-pending:hover { background: #f59e0b44; }
+
+    .trail-name-cell { max-width: 260px; }
+    .trail-name-cell .trail-name { font-weight: 500; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .trail-name-cell .trail-meta { font-size: 11px; color: #444; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -206,6 +269,11 @@
         <button class="sidebar-btn" data-panel="conditions" onclick="showPanel('conditions', this)">
           <span class="en">Add Conditions Report</span>
           <span class="sl">Dodaj poročilo</span>
+        </button>
+        <div class="sidebar-label" style="margin-top:20px">Moderation</div>
+        <button class="sidebar-btn" data-panel="review" onclick="showPanel('review', this); loadTrailReview()">
+          <span class="en">Review Trails</span>
+          <span class="sl">Pregled poti</span>
         </button>
       </nav>
 
@@ -459,6 +527,43 @@
 
           <button class="btn-submit" onclick="submitConditions()">Submit Report / Oddaj poročilo</button>
           <div class="form-msg" id="c-msg"></div>
+        </div>
+
+        <!-- ── REVIEW TRAILS ──────────────────────────────────────── -->
+        <div class="section-panel" id="panel-review">
+          <div class="panel-title">Review Trails</div>
+          <div class="panel-subtitle">Pregled poti / Approve or reject imported OSM trails</div>
+
+          <div class="review-stats" id="review-stats">
+            <div class="stat-box"><div class="stat-val" id="stat-total">—</div><div class="stat-label">Total</div></div>
+            <div class="stat-box approved"><div class="stat-val" id="stat-approved">—</div><div class="stat-label">Approved</div></div>
+            <div class="stat-box rejected"><div class="stat-val" id="stat-rejected">—</div><div class="stat-label">Rejected</div></div>
+            <div class="stat-box pending"><div class="stat-val" id="stat-pending">—</div><div class="stat-label">Pending Review</div></div>
+          </div>
+
+          <div class="review-filters">
+            <button class="filter-btn active" data-filter="pending" onclick="setReviewFilter('pending', this)">Pending</button>
+            <button class="filter-btn" data-filter="approved" onclick="setReviewFilter('approved', this)">Approved</button>
+            <button class="filter-btn" data-filter="rejected" onclick="setReviewFilter('rejected', this)">Rejected</button>
+            <button class="filter-btn" data-filter="all" onclick="setReviewFilter('all', this)">All</button>
+            <input class="review-search" type="text" id="review-search" placeholder="Search by name…" oninput="renderTrailTable()">
+          </div>
+
+          <div style="overflow-x:auto">
+            <table class="trail-table">
+              <thead>
+                <tr>
+                  <th>Trail Name</th>
+                  <th>Distance</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="trail-review-body"></tbody>
+            </table>
+          </div>
+          <div id="review-empty" style="display:none;padding:32px 0;text-align:center;color:#444;font-size:13px">No trails match this filter.</div>
         </div>
 
       </main>
@@ -742,6 +847,107 @@
       } finally {
         btn.disabled = false;
       }
+    }
+
+    // ── Trail Review ──────────────────────────────────────────────────────────
+
+    let allTrails = [];
+    let reviewFilter = 'pending';
+    let reviewLoaded = false;
+
+    async function loadTrailReview() {
+      if (reviewLoaded) { renderTrailTable(); return; }
+      try {
+        const res = await fetch(`${API}/trails-review`, { headers: authHeaders() });
+        allTrails = await res.json();
+        reviewLoaded = true;
+        updateReviewStats();
+        renderTrailTable();
+      } catch {
+        document.getElementById('trail-review-body').innerHTML =
+          '<tr><td colspan="5" style="color:#f87171;padding:20px">Failed to load trails.</td></tr>';
+      }
+    }
+
+    function updateReviewStats() {
+      const approved = allTrails.filter(t => t.is_approved === true).length;
+      const rejected = allTrails.filter(t => t.is_approved === false).length;
+      const pending  = allTrails.filter(t => t.is_approved === null).length;
+      document.getElementById('stat-total').textContent    = allTrails.length;
+      document.getElementById('stat-approved').textContent = approved;
+      document.getElementById('stat-rejected').textContent = rejected;
+      document.getElementById('stat-pending').textContent  = pending;
+    }
+
+    function setReviewFilter(filter, btn) {
+      reviewFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTrailTable();
+    }
+
+    function renderTrailTable() {
+      const search = (document.getElementById('review-search').value || '').toLowerCase();
+      const filtered = allTrails.filter(t => {
+        const matchFilter =
+          reviewFilter === 'all' ||
+          (reviewFilter === 'approved' && t.is_approved === true) ||
+          (reviewFilter === 'rejected' && t.is_approved === false) ||
+          (reviewFilter === 'pending'  && t.is_approved === null);
+        const matchSearch = !search || t.name.toLowerCase().includes(search);
+        return matchFilter && matchSearch;
+      });
+
+      const tbody = document.getElementById('trail-review-body');
+      const empty = document.getElementById('review-empty');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      tbody.innerHTML = filtered.map(t => {
+        const statusBadge = t.is_approved === true
+          ? '<span class="badge badge-approved">Approved</span>'
+          : t.is_approved === false
+            ? '<span class="badge badge-rejected">Rejected</span>'
+            : '<span class="badge badge-pending">Pending</span>';
+        const dist = t.distance_km ? `${parseFloat(t.distance_km).toFixed(1)} km` : '—';
+        const summit = t.summit_name ? `<div class="trail-meta">${t.summit_name}</div>` : '';
+        return `<tr id="row-${t.id}">
+          <td class="trail-name-cell">
+            <div class="trail-name" title="${t.name}">${t.name}</div>
+            ${summit}
+          </td>
+          <td style="color:#666">${dist}</td>
+          <td style="color:#666;font-size:12px">${t.activity_type || '—'}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-approve" onclick="setApproval('${t.id}', true)">Approve</button>
+              <button class="btn-reject"  onclick="setApproval('${t.id}', false)">Reject</button>
+              <button class="btn-pending" onclick="setApproval('${t.id}', null)">Reset</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function setApproval(id, approved) {
+      try {
+        const res = await fetch(`${API}/trails/${id}/approval`, {
+          method: 'PATCH',
+          headers: authHeaders(),
+          body: JSON.stringify({ approved })
+        });
+        if (!res.ok) return;
+        const idx = allTrails.findIndex(t => t.id === id);
+        if (idx !== -1) allTrails[idx].is_approved = approved;
+        updateReviewStats();
+        renderTrailTable();
+      } catch { /* silent */ }
     }
 
     // ── Init ──────────────────────────────────────────────────────────────────

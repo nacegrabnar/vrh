@@ -47,6 +47,7 @@ CREATE TABLE trails (
   path TEXT,
   description TEXT,
   description_sl TEXT,
+  is_approved BOOLEAN DEFAULT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
 

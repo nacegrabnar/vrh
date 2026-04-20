@@ -75,6 +75,40 @@ router.get('/climbing-list', requireAdmin, async (req, res) => {
   }
 });
 
+// ── GET /admin/trails-review ──────────────────────────────────────────────────
+router.get('/trails-review', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT t.id, t.name, t.distance_km, t.activity_type, t.is_approved,
+              s.name AS summit_name
+       FROM trails t LEFT JOIN summits s ON t.summit_id = s.id
+       ORDER BY t.is_approved NULLS FIRST, t.name ASC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /admin/trails/:id/approval ─────────────────────────────────────────
+router.patch('/trails/:id/approval', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { approved } = req.body;
+    if (typeof approved !== 'boolean' && approved !== null) {
+      return res.status(400).json({ error: 'approved must be true, false, or null' });
+    }
+    const result = await pool.query(
+      'UPDATE trails SET is_approved = $1 WHERE id = $2 RETURNING id, name, is_approved',
+      [approved, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Trail not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── POST /admin/conditions ────────────────────────────────────────────────────
 // Like the regular conditions endpoint but without a logged-in user requirement.
 router.post('/conditions', requireAdmin, async (req, res) => {

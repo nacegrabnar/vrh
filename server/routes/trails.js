@@ -9,11 +9,13 @@ function toSlug(name) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-// GET all trails
+// GET all trails (approved only by default; ?all=true returns all)
 router.get('/', async (req, res) => {
   try {
+    const showAll = req.query.all === 'true';
+    const where = showAll ? '' : 'WHERE t.is_approved = true';
     const result = await pool.query(
-      'SELECT t.*, s.name AS summit_name FROM trails t LEFT JOIN summits s ON t.summit_id = s.id ORDER BY t.difficulty ASC'
+      `SELECT t.*, s.name AS summit_name FROM trails t LEFT JOIN summits s ON t.summit_id = s.id ${where} ORDER BY t.difficulty ASC`
     );
     res.json(result.rows);
   } catch (err) {
