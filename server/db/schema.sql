@@ -40,6 +40,7 @@ CREATE TABLE trails (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   summit_id UUID REFERENCES summits(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
+  name_sl VARCHAR(255),
   difficulty VARCHAR(50),
   distance_km FLOAT,
   elevation_gain_m FLOAT,

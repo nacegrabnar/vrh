@@ -188,6 +188,51 @@
     .trail-name-cell { max-width: 260px; }
     .trail-name-cell .trail-name { font-weight: 500; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .trail-name-cell .trail-meta { font-size: 11px; color: #444; margin-top: 2px; }
+
+    /* ── Edit / Delete buttons ── */
+    .btn-edit {
+      padding: 4px 10px; border-radius: 5px; border: 1px solid #60a5fa44;
+      background: #1e3a5f22; color: #60a5fa; font-size: 11px;
+      font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-edit:hover { background: #1e3a5f55; }
+    .btn-delete {
+      padding: 4px 10px; border-radius: 5px; border: 1px solid #f8717144;
+      background: #f8717122; color: #f87171; font-size: 11px;
+      font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-delete:hover { background: #f8717144; }
+
+    /* ── Manage table ── */
+    .manage-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .manage-table th {
+      text-align: left; padding: 8px 12px; border-bottom: 1px solid #1e2130;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #444;
+    }
+    .manage-table td { padding: 9px 12px; border-bottom: 1px solid #14161e; vertical-align: middle; }
+    .manage-table tr:hover td { background: #ffffff04; }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+    }
+    .modal-box {
+      background: #1a1d26; border: 1px solid #2a2d36; border-radius: 16px;
+      padding: 32px; width: 100%; max-width: 640px; max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .modal-close {
+      background: none; border: 1px solid #2a2d36; color: #666; font-size: 16px;
+      cursor: pointer; padding: 4px 10px; border-radius: 6px; line-height: 1;
+      flex-shrink: 0; transition: all 0.15s;
+    }
+    .modal-close:hover { color: #fff; border-color: #444; }
   </style>
 </head>
 <body>
@@ -274,6 +319,10 @@
         <button class="sidebar-btn" data-panel="review" onclick="showPanel('review', this); loadTrailReview()">
           <span class="en">Review Trails</span>
           <span class="sl">Pregled poti</span>
+        </button>
+        <button class="sidebar-btn" data-panel="manage-summits" onclick="showPanel('manage-summits', this); loadManageSummits()">
+          <span class="en">Manage Summits</span>
+          <span class="sl">Upravljanje vrhov</span>
         </button>
       </nav>
 
@@ -566,7 +615,201 @@
           <div id="review-empty" style="display:none;padding:32px 0;text-align:center;color:#444;font-size:13px">No trails match this filter.</div>
         </div>
 
+        <!-- ── MANAGE SUMMITS ────────────────────────────────────────── -->
+        <div class="section-panel" id="panel-manage-summits">
+          <div class="panel-title">Manage Summits</div>
+          <div class="panel-subtitle">Upravljanje vrhov / Edit or delete existing summits</div>
+
+          <div id="manage-summits-status" style="color:#555;font-size:13px;padding:20px 0">Loading…</div>
+
+          <div style="overflow-x:auto" id="manage-summits-wrap" style="display:none">
+            <table class="manage-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Area</th>
+                  <th>Elevation</th>
+                  <th>Type</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="manage-summit-body"></tbody>
+            </table>
+          </div>
+        </div>
+
       </main>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ EDIT SUMMIT MODAL ══════════════════════════ -->
+  <div id="modal-edit-summit" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal('modal-edit-summit')">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <div class="panel-title">Edit Summit</div>
+          <div class="panel-subtitle" style="margin-bottom:0">Uredi vrh</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-edit-summit')">✕</button>
+      </div>
+      <input type="hidden" id="es-id">
+
+      <div class="form-row-2">
+        <div>
+          <label>Name (English)</label>
+          <input type="text" id="es-name" placeholder="e.g. Triglav">
+        </div>
+        <div>
+          <label>Name (Slovenian) <span class="sl">Ime (slovensko)</span></label>
+          <input type="text" id="es-name-sl" placeholder="npr. Triglav">
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div>
+          <label>Area <span class="sl">Območje</span></label>
+          <select id="es-area"><option value="">— no area —</option></select>
+        </div>
+        <div>
+          <label>Type <span class="sl">Vrsta</span></label>
+          <select id="es-type">
+            <option value="peak">Peak / Vrh</option>
+            <option value="crag">Crag / Skala</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div>
+          <label>Elevation (m) <span class="sl">Nadmorska višina</span></label>
+          <input type="number" id="es-elevation" placeholder="e.g. 2864" min="0">
+        </div>
+        <div>
+          <label>Difficulty <span class="sl">Zahtevnost</span></label>
+          <select id="es-difficulty">
+            <option value="">— auto from elevation —</option>
+            <option value="easy">Easy / Lahko</option>
+            <option value="moderate">Moderate / Srednje</option>
+            <option value="demanding">Demanding / Zahtevno</option>
+            <option value="very_hard">Very Hard / Zelo zahtevno</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div>
+          <label>Latitude</label>
+          <input type="number" id="es-lat" placeholder="e.g. 46.3792" step="any">
+        </div>
+        <div>
+          <label>Longitude</label>
+          <input type="number" id="es-lon" placeholder="e.g. 13.8369" step="any">
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="field-group-title">Description / Opis</div>
+
+      <div class="form-row">
+        <label>Description (English)</label>
+        <textarea id="es-desc" placeholder="Describe the summit in English…"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Description (Slovenian) <span class="sl">Opis (slovensko)</span></label>
+        <textarea id="es-desc-sl" placeholder="Opišite vrh v slovenščini…"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn-submit" onclick="saveEditSummit()">Save Changes</button>
+        <button class="auth-btn" onclick="closeModal('modal-edit-summit')">Cancel</button>
+      </div>
+      <div class="form-msg" id="es-msg"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ EDIT TRAIL MODAL ════════════════════════════ -->
+  <div id="modal-edit-trail" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal('modal-edit-trail')">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <div class="panel-title">Edit Trail</div>
+          <div class="panel-subtitle" style="margin-bottom:0">Uredi pot</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-edit-trail')">✕</button>
+      </div>
+      <input type="hidden" id="et-id">
+
+      <div class="form-row-2">
+        <div>
+          <label>Name (English)</label>
+          <input type="text" id="et-name" placeholder="e.g. Triglav via Prag">
+        </div>
+        <div>
+          <label>Name (Slovenian) <span class="sl">Ime (slovensko)</span></label>
+          <input type="text" id="et-name-sl" placeholder="npr. Triglav po Pragu">
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div>
+          <label>Summit <span class="sl">Vrh</span></label>
+          <select id="et-summit"><option value="">— select summit —</option></select>
+        </div>
+        <div>
+          <label>Activity Type <span class="sl">Vrsta aktivnosti</span></label>
+          <select id="et-activity">
+            <option value="hiking">Hiking / Pohodništvo</option>
+            <option value="trail_running">Trail Running / Tek v naravi</option>
+            <option value="cycling">Cycling / Kolesarjenje</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row-3">
+        <div>
+          <label>Difficulty <span class="sl">Zahtevnost</span></label>
+          <select id="et-difficulty">
+            <option value="easy">Easy / Lahko</option>
+            <option value="medium">Medium / Srednje</option>
+            <option value="hard">Hard / Zahtevno</option>
+          </select>
+        </div>
+        <div>
+          <label>Distance (km) <span class="sl">Razdalja</span></label>
+          <input type="number" id="et-distance" placeholder="e.g. 12.5" min="0" step="0.1">
+        </div>
+        <div>
+          <label>Elevation Gain (m) <span class="sl">Vzpon</span></label>
+          <input type="number" id="et-elevation-gain" placeholder="e.g. 1400" min="0">
+        </div>
+      </div>
+
+      <div class="form-row" style="max-width:220px">
+        <label>Approval Status <span class="sl">Status</span></label>
+        <select id="et-approved">
+          <option value="">Pending</option>
+          <option value="true">Approved</option>
+          <option value="false">Rejected</option>
+        </select>
+      </div>
+
+      <hr class="divider">
+      <div class="field-group-title">Description / Opis</div>
+
+      <div class="form-row">
+        <label>Description (English)</label>
+        <textarea id="et-desc" placeholder="Describe the trail in English…"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Description (Slovenian) <span class="sl">Opis (slovensko)</span></label>
+        <textarea id="et-desc-sl" placeholder="Opišite pot v slovenščini…"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn-submit" onclick="saveEditTrail()">Save Changes</button>
+        <button class="auth-btn" onclick="closeModal('modal-edit-trail')">Cancel</button>
+      </div>
+      <div class="form-msg" id="et-msg"></div>
     </div>
   </div>
 
@@ -929,6 +1172,8 @@
               <button class="btn-approve" onclick="setApproval('${t.id}', true)">Approve</button>
               <button class="btn-reject"  onclick="setApproval('${t.id}', false)">Reject</button>
               <button class="btn-pending" onclick="setApproval('${t.id}', null)">Reset</button>
+              <button class="btn-edit"   onclick="openEditTrail('${t.id}')">Edit</button>
+              <button class="btn-delete" onclick="deleteTrail('${t.id}', ${JSON.stringify(t.name)})">Delete</button>
             </div>
           </td>
         </tr>`;
@@ -948,6 +1193,232 @@
         updateReviewStats();
         renderTrailTable();
       } catch { /* silent */ }
+    }
+
+    // ── Modal helpers ────────────────────────────────────────────────────────
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function openModal(id)  { document.getElementById(id).style.display = 'flex'; }
+
+    // ── Manage Summits ───────────────────────────────────────────────────────
+
+    let manageSummits = [];
+    let manageSummitsLoaded = false;
+
+    async function loadManageSummits() {
+      const status = document.getElementById('manage-summits-status');
+      const wrap   = document.getElementById('manage-summits-wrap');
+      if (manageSummitsLoaded) { renderSummitManageTable(); return; }
+      status.textContent = 'Loading summits…';
+      status.style.display = 'block';
+      wrap.style.display = 'none';
+      try {
+        const res = await fetch(`${API}/summits-manage`, { headers: authHeaders() });
+        manageSummits = await res.json();
+        manageSummitsLoaded = true;
+        status.style.display = 'none';
+        wrap.style.display = 'block';
+        renderSummitManageTable();
+      } catch {
+        status.textContent = 'Failed to load summits.';
+        status.style.color = '#f87171';
+      }
+    }
+
+    function renderSummitManageTable() {
+      const tbody = document.getElementById('manage-summit-body');
+      if (manageSummits.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:#444;padding:20px;text-align:center">No summits found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = manageSummits.map(s => {
+        const elev  = s.elevation_m ? `${s.elevation_m}m` : '—';
+        const area  = s.area_name || '—';
+        const badge = s.type === 'crag'
+          ? '<span class="badge badge-pending">Crag</span>'
+          : '<span class="badge badge-approved">Peak</span>';
+        const sl    = s.name_sl ? ` <span style="color:#555;font-size:11px">${s.name_sl}</span>` : '';
+        return `<tr>
+          <td>${s.name}${sl}</td>
+          <td style="color:#666">${area}</td>
+          <td style="color:#666">${elev}</td>
+          <td>${badge}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-edit"   onclick="openEditSummit('${s.id}')">Edit</button>
+              <button class="btn-delete" onclick="deleteSummit('${s.id}', ${JSON.stringify(s.name)})">Delete</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function openEditSummit(id) {
+      try {
+        const res = await fetch(`/api/summits/${id}`);
+        if (!res.ok) { alert('Failed to load summit data.'); return; }
+        const s = await res.json();
+
+        document.getElementById('es-id').value        = s.id;
+        document.getElementById('es-name').value      = s.name || '';
+        document.getElementById('es-name-sl').value   = s.name_sl || '';
+        document.getElementById('es-elevation').value = s.elevation_m || '';
+        document.getElementById('es-lat').value       = s.latitude || '';
+        document.getElementById('es-lon').value       = s.longitude || '';
+        document.getElementById('es-desc').value      = s.description || '';
+        document.getElementById('es-desc-sl').value   = s.description_sl || '';
+        document.getElementById('es-type').value      = s.type || 'peak';
+        document.getElementById('es-difficulty').value = s.difficulty || '';
+
+        const srcSel = document.getElementById('s-area');
+        const tgtSel = document.getElementById('es-area');
+        tgtSel.innerHTML = srcSel.innerHTML;
+        tgtSel.value = s.area_id || '';
+
+        document.getElementById('es-msg').style.display = 'none';
+        openModal('modal-edit-summit');
+      } catch {
+        alert('Error loading summit data.');
+      }
+    }
+
+    async function saveEditSummit() {
+      const id   = document.getElementById('es-id').value;
+      const name = document.getElementById('es-name').value.trim();
+      const elev = parseFloat(document.getElementById('es-elevation').value);
+      if (!name) { showMsg('es-msg', 'error', 'Name is required.'); return; }
+      if (!elev)  { showMsg('es-msg', 'error', 'Elevation is required.'); return; }
+
+      const btn = document.querySelector('#modal-edit-summit .btn-submit');
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/summits/${id}`, {
+          method: 'PATCH',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            name,
+            name_sl:        document.getElementById('es-name-sl').value.trim()   || null,
+            area_id:        document.getElementById('es-area').value              || null,
+            elevation_m:    elev,
+            type:           document.getElementById('es-type').value,
+            difficulty:     document.getElementById('es-difficulty').value        || null,
+            description:    document.getElementById('es-desc').value.trim()       || null,
+            description_sl: document.getElementById('es-desc-sl').value.trim()    || null,
+            latitude:       parseFloat(document.getElementById('es-lat').value)   || null,
+            longitude:      parseFloat(document.getElementById('es-lon').value)   || null,
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) { showMsg('es-msg', 'error', data.error || 'Failed to save.'); return; }
+        showMsg('es-msg', 'success', `Summit "${data.name}" saved!`);
+        manageSummitsLoaded = false;
+        await loadManageSummits();
+        setTimeout(() => closeModal('modal-edit-summit'), 1500);
+      } catch {
+        showMsg('es-msg', 'error', 'Network error.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteSummit(id, name) {
+      if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`${API}/summits/${id}`, {
+          method: 'DELETE', headers: authHeaders()
+        });
+        if (!res.ok) { const d = await res.json(); alert(d.error || 'Failed to delete.'); return; }
+        manageSummitsLoaded = false;
+        await loadManageSummits();
+      } catch {
+        alert('Network error — could not delete summit.');
+      }
+    }
+
+    // ── Edit / Delete Trails ────────────────────────────────────────────────
+
+    async function openEditTrail(id) {
+      try {
+        const res = await fetch(`/api/trails/${id}`);
+        if (!res.ok) { alert('Failed to load trail data.'); return; }
+        const t = await res.json();
+
+        document.getElementById('et-id').value             = t.id;
+        document.getElementById('et-name').value           = t.name || '';
+        document.getElementById('et-name-sl').value        = t.name_sl || '';
+        document.getElementById('et-distance').value       = t.distance_km || '';
+        document.getElementById('et-elevation-gain').value = t.elevation_gain_m || '';
+        document.getElementById('et-desc').value           = t.description || '';
+        document.getElementById('et-desc-sl').value        = t.description_sl || '';
+        document.getElementById('et-difficulty').value     = t.difficulty || 'easy';
+        document.getElementById('et-activity').value       = t.activity_type || 'hiking';
+        document.getElementById('et-approved').value       =
+          t.is_approved === true ? 'true' : t.is_approved === false ? 'false' : '';
+
+        const srcSel = document.getElementById('t-summit');
+        const tgtSel = document.getElementById('et-summit');
+        tgtSel.innerHTML = srcSel.innerHTML;
+        tgtSel.value = t.summit_id || '';
+
+        document.getElementById('et-msg').style.display = 'none';
+        openModal('modal-edit-trail');
+      } catch {
+        alert('Error loading trail data.');
+      }
+    }
+
+    async function saveEditTrail() {
+      const id   = document.getElementById('et-id').value;
+      const name = document.getElementById('et-name').value.trim();
+      if (!name) { showMsg('et-msg', 'error', 'Trail name is required.'); return; }
+
+      const approvedVal = document.getElementById('et-approved').value;
+      const isApproved  = approvedVal === 'true' ? true : approvedVal === 'false' ? false : null;
+
+      const btn = document.querySelector('#modal-edit-trail .btn-submit');
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/trails/${id}`, {
+          method: 'PATCH',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            name,
+            name_sl:          document.getElementById('et-name-sl').value.trim()        || null,
+            summit_id:        document.getElementById('et-summit').value                || null,
+            difficulty:       document.getElementById('et-difficulty').value,
+            distance_km:      parseFloat(document.getElementById('et-distance').value)  || null,
+            elevation_gain_m: parseFloat(document.getElementById('et-elevation-gain').value) || null,
+            activity_type:    document.getElementById('et-activity').value,
+            description:      document.getElementById('et-desc').value.trim()           || null,
+            description_sl:   document.getElementById('et-desc-sl').value.trim()        || null,
+            is_approved:      isApproved,
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) { showMsg('et-msg', 'error', data.error || 'Failed to save.'); return; }
+        showMsg('et-msg', 'success', `Trail "${data.name}" saved!`);
+        reviewLoaded = false;
+        await loadTrailReview();
+        setTimeout(() => closeModal('modal-edit-trail'), 1500);
+      } catch {
+        showMsg('et-msg', 'error', 'Network error.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteTrail(id, name) {
+      if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`${API}/trails/${id}`, {
+          method: 'DELETE', headers: authHeaders()
+        });
+        if (!res.ok) { const d = await res.json(); alert(d.error || 'Failed to delete.'); return; }
+        reviewLoaded = false;
+        await loadTrailReview();
+      } catch {
+        alert('Network error — could not delete trail.');
+      }
     }
 
     // ── Init ──────────────────────────────────────────────────────────────────

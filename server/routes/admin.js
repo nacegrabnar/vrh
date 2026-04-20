@@ -126,4 +126,93 @@ router.post('/conditions', requireAdmin, async (req, res) => {
   }
 });
 
+// ── GET /admin/summits-manage ─────────────────────────────────────────────────
+router.get('/summits-manage', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT s.id, s.name, s.name_sl, s.elevation_m, s.type, s.difficulty,
+              s.area_id, s.latitude, s.longitude, s.description, s.description_sl,
+              a.name AS area_name
+       FROM summits s LEFT JOIN areas a ON s.area_id = a.id
+       ORDER BY s.name ASC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /admin/summits/:id ──────────────────────────────────────────────────
+router.patch('/summits/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, name_sl, area_id, elevation_m, type, difficulty, description, description_sl, latitude, longitude } = req.body;
+    if (!name || !elevation_m) {
+      return res.status(400).json({ error: 'name and elevation_m are required' });
+    }
+    const result = await pool.query(
+      `UPDATE summits
+       SET name=$1, name_sl=$2, area_id=$3, elevation_m=$4, type=$5, difficulty=$6,
+           description=$7, description_sl=$8, latitude=$9, longitude=$10
+       WHERE id=$11 RETURNING *`,
+      [name, name_sl || null, area_id || null, elevation_m, type || 'peak',
+       difficulty || null, description || null, description_sl || null,
+       latitude || null, longitude || null, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Summit not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── DELETE /admin/summits/:id ─────────────────────────────────────────────────
+router.delete('/summits/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM summits WHERE id=$1 RETURNING id', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Summit not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /admin/trails/:id ───────────────────────────────────────────────────
+router.patch('/trails/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, name_sl, summit_id, difficulty, distance_km, elevation_gain_m,
+            activity_type, description, description_sl, is_approved } = req.body;
+    if (!name) return res.status(400).json({ error: 'name is required' });
+    const approved = is_approved === true ? true : is_approved === false ? false : null;
+    const result = await pool.query(
+      `UPDATE trails
+       SET name=$1, name_sl=$2, summit_id=$3, difficulty=$4, distance_km=$5,
+           elevation_gain_m=$6, activity_type=$7, description=$8, description_sl=$9,
+           is_approved=$10
+       WHERE id=$11 RETURNING *`,
+      [name, name_sl || null, summit_id || null, difficulty, distance_km || null,
+       elevation_gain_m || null, activity_type || 'hiking', description || null,
+       description_sl || null, approved, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Trail not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── DELETE /admin/trails/:id ──────────────────────────────────────────────────
+router.delete('/trails/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM trails WHERE id=$1 RETURNING id', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Trail not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = { router, requireAdmin };
