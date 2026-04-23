@@ -1362,7 +1362,9 @@
       wrap.style.display = 'none';
       try {
         const res = await fetch(`${API}/summits-manage`, { headers: authHeaders() });
-        manageSummits = await res.json();
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Server error');
+        manageSummits = data;
         manageSummitsLoaded = true;
         status.style.display = 'none';
         wrap.style.display = 'block';

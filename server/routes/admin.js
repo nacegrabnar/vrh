@@ -130,7 +130,7 @@ router.post('/conditions', requireAdmin, async (req, res) => {
 router.get('/summits-manage', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT s.id, s.name, s.name_sl, s.elevation_m, s.type, s.difficulty,
+      `SELECT s.id, s.name, s.name_sl, s.elevation_m, s.type,
               s.area_id, s.latitude, s.longitude, s.description, s.description_sl,
               a.name AS area_name
        FROM summits s LEFT JOIN areas a ON s.area_id = a.id
