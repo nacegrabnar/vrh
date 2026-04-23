@@ -215,4 +215,59 @@ router.delete('/trails/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ── GET /admin/climbing-manage ────────────────────────────────────────────────
+router.get('/climbing-manage', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT cr.id, cr.name, cr.type, cr.grade_french, cr.grade_uiaa, cr.grade_alpine,
+              cr.length_m, cr.num_bolts, cr.rock_type, cr.description, cr.description_sl,
+              cr.summit_id, s.name AS summit_name
+       FROM climbing_routes cr LEFT JOIN summits s ON cr.summit_id = s.id
+       ORDER BY cr.name ASC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /admin/climbing/:id ─────────────────────────────────────────────────
+router.patch('/climbing/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, summit_id, type, grade_french, grade_uiaa, grade_alpine,
+            length_m, num_bolts, rock_type, description, description_sl } = req.body;
+    if (!name) return res.status(400).json({ error: 'name is required' });
+    const result = await pool.query(
+      `UPDATE climbing_routes
+       SET name=$1, summit_id=$2, type=$3, grade_french=$4, grade_uiaa=$5,
+           grade_alpine=$6, length_m=$7, num_bolts=$8, rock_type=$9,
+           description=$10, description_sl=$11
+       WHERE id=$12 RETURNING *`,
+      [name, summit_id || null, type || 'sport',
+       grade_french || null, grade_uiaa || null, grade_alpine || null,
+       length_m || null, num_bolts || null, rock_type || null,
+       description || null, description_sl || null, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Climbing route not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── DELETE /admin/climbing/:id ────────────────────────────────────────────────
+router.delete('/climbing/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM climbing_routes WHERE id=$1 RETURNING id', [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Climbing route not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = { router, requireAdmin };

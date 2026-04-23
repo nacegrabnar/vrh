@@ -324,6 +324,14 @@
           <span class="en">Manage Summits</span>
           <span class="sl">Upravljanje vrhov</span>
         </button>
+        <button class="sidebar-btn" data-panel="manage-trails" onclick="showPanel('manage-trails', this); loadManageTrails()">
+          <span class="en">Manage Trails</span>
+          <span class="sl">Upravljanje poti</span>
+        </button>
+        <button class="sidebar-btn" data-panel="manage-climbing" onclick="showPanel('manage-climbing', this); loadManageClimbing()">
+          <span class="en">Manage Climbing Routes</span>
+          <span class="sl">Upravljanje plezalnih smeri</span>
+        </button>
       </nav>
 
       <!-- Main panels -->
@@ -615,6 +623,55 @@
           <div id="review-empty" style="display:none;padding:32px 0;text-align:center;color:#444;font-size:13px">No trails match this filter.</div>
         </div>
 
+        <!-- ── MANAGE TRAILS ─────────────────────────────────────────── -->
+        <div class="section-panel" id="panel-manage-trails">
+          <div class="panel-title">Manage Trails</div>
+          <div class="panel-subtitle">Upravljanje poti / Edit or delete existing trails</div>
+
+          <div id="manage-trails-status" style="color:#555;font-size:13px;padding:20px 0">Loading…</div>
+
+          <div style="overflow-x:auto;display:none" id="manage-trails-wrap">
+            <table class="manage-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Summit</th>
+                  <th>Distance</th>
+                  <th>Difficulty</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="manage-trail-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── MANAGE CLIMBING ROUTES ─────────────────────────────── -->
+        <div class="section-panel" id="panel-manage-climbing">
+          <div class="panel-title">Manage Climbing Routes</div>
+          <div class="panel-subtitle">Upravljanje plezalnih smeri / Edit or delete climbing routes</div>
+
+          <div id="manage-climbing-status" style="color:#555;font-size:13px;padding:20px 0">Loading…</div>
+
+          <div style="overflow-x:auto;display:none" id="manage-climbing-wrap">
+            <table class="manage-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Summit</th>
+                  <th>French</th>
+                  <th>UIAA</th>
+                  <th>Type</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="manage-climbing-body"></tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- ── MANAGE SUMMITS ────────────────────────────────────────── -->
         <div class="section-panel" id="panel-manage-summits">
           <div class="panel-title">Manage Summits</div>
@@ -622,7 +679,7 @@
 
           <div id="manage-summits-status" style="color:#555;font-size:13px;padding:20px 0">Loading…</div>
 
-          <div style="overflow-x:auto" id="manage-summits-wrap" style="display:none">
+          <div style="overflow-x:auto;display:none" id="manage-summits-wrap">
             <table class="manage-table">
               <thead>
                 <tr>
@@ -810,6 +867,97 @@
         <button class="auth-btn" onclick="closeModal('modal-edit-trail')">Cancel</button>
       </div>
       <div class="form-msg" id="et-msg"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════ EDIT CLIMBING MODAL ═══════════════════════════ -->
+  <div id="modal-edit-climbing" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal('modal-edit-climbing')">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <div class="panel-title">Edit Climbing Route</div>
+          <div class="panel-subtitle" style="margin-bottom:0">Uredi plezalno smer</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-edit-climbing')">✕</button>
+      </div>
+      <input type="hidden" id="ec-id">
+
+      <div class="form-row-2">
+        <div>
+          <label>Route Name</label>
+          <input type="text" id="ec-name" placeholder="e.g. Directissima">
+        </div>
+        <div>
+          <label>Summit <span class="sl">Vrh</span></label>
+          <select id="ec-summit"><option value="">— select summit —</option></select>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div>
+          <label>Type <span class="sl">Vrsta</span></label>
+          <select id="ec-type">
+            <option value="sport">Sport / Športno</option>
+            <option value="trad">Trad / Tradicionalno</option>
+            <option value="alpine">Alpine / Alpinsko</option>
+            <option value="via_ferrata">Via Ferrata</option>
+          </select>
+        </div>
+        <div>
+          <label>Rock Type <span class="sl">Vrsta skale</span></label>
+          <input type="text" id="ec-rock" placeholder="e.g. limestone">
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="field-group-title">Grades / Težavnostne ocene</div>
+
+      <div class="form-row-3">
+        <div>
+          <label>French Grade</label>
+          <input type="text" id="ec-grade-fr" placeholder="e.g. 7a">
+        </div>
+        <div>
+          <label>UIAA Grade</label>
+          <input type="text" id="ec-grade-uiaa" placeholder="e.g. VII+">
+        </div>
+        <div>
+          <label>Alpine Grade</label>
+          <input type="text" id="ec-grade-alpine" placeholder="e.g. TD">
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="field-group-title">Details / Podrobnosti</div>
+
+      <div class="form-row-2">
+        <div>
+          <label>Length (m) <span class="sl">Dolžina</span></label>
+          <input type="number" id="ec-length" placeholder="e.g. 120" min="0">
+        </div>
+        <div>
+          <label>Number of Bolts <span class="sl">Število svedrov</span></label>
+          <input type="number" id="ec-bolts" placeholder="e.g. 15" min="0">
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="field-group-title">Description / Opis</div>
+
+      <div class="form-row">
+        <label>Description (English)</label>
+        <textarea id="ec-desc" placeholder="Describe the route in English…"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Description (Slovenian) <span class="sl">Opis (slovensko)</span></label>
+        <textarea id="ec-desc-sl" placeholder="Opišite smer v slovenščini…"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn-submit" onclick="saveEditClimbing()">Save Changes</button>
+        <button class="auth-btn" onclick="closeModal('modal-edit-climbing')">Cancel</button>
+      </div>
+      <div class="form-msg" id="ec-msg"></div>
     </div>
   </div>
 
@@ -1398,7 +1546,13 @@
         if (!res.ok) { showMsg('et-msg', 'error', data.error || 'Failed to save.'); return; }
         showMsg('et-msg', 'success', `Trail "${data.name}" saved!`);
         reviewLoaded = false;
-        await loadTrailReview();
+        manageTrailsLoaded = false;
+        const activePanel = document.querySelector('.section-panel.active');
+        if (activePanel && activePanel.id === 'panel-manage-trails') {
+          await loadManageTrails();
+        } else {
+          await loadTrailReview();
+        }
         setTimeout(() => closeModal('modal-edit-trail'), 1500);
       } catch {
         showMsg('et-msg', 'error', 'Network error.');
@@ -1418,6 +1572,212 @@
         await loadTrailReview();
       } catch {
         alert('Network error — could not delete trail.');
+      }
+    }
+
+    // ── Manage Trails ────────────────────────────────────────────────────────
+
+    let manageTrails = [];
+    let manageTrailsLoaded = false;
+
+    async function loadManageTrails() {
+      const status = document.getElementById('manage-trails-status');
+      const wrap   = document.getElementById('manage-trails-wrap');
+      if (manageTrailsLoaded) { renderManageTrailTable(); return; }
+      status.textContent = 'Loading trails…';
+      status.style.display = 'block';
+      wrap.style.display = 'none';
+      try {
+        const res = await fetch(`${API}/trails-review`, { headers: authHeaders() });
+        manageTrails = await res.json();
+        manageTrailsLoaded = true;
+        status.style.display = 'none';
+        wrap.style.display = 'block';
+        renderManageTrailTable();
+      } catch {
+        status.textContent = 'Failed to load trails.';
+        status.style.color = '#f87171';
+      }
+    }
+
+    function renderManageTrailTable() {
+      const tbody = document.getElementById('manage-trail-body');
+      if (manageTrails.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="color:#444;padding:20px;text-align:center">No trails found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = manageTrails.map(t => {
+        const dist   = t.distance_km ? `${parseFloat(t.distance_km).toFixed(1)} km` : '—';
+        const summit = t.summit_name || '—';
+        const sl     = t.name_sl ? ` <span style="color:#555;font-size:11px">${t.name_sl}</span>` : '';
+        const statusBadge = t.is_approved === true
+          ? '<span class="badge badge-approved">Approved</span>'
+          : t.is_approved === false
+            ? '<span class="badge badge-rejected">Rejected</span>'
+            : '<span class="badge badge-pending">Pending</span>';
+        return `<tr>
+          <td>${t.name}${sl}</td>
+          <td style="color:#666">${summit}</td>
+          <td style="color:#666">${dist}</td>
+          <td style="color:#666;font-size:12px">${t.difficulty || '—'}</td>
+          <td style="color:#666;font-size:12px">${t.activity_type || '—'}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-edit"   onclick="openEditTrail('${t.id}')">Edit</button>
+              <button class="btn-delete" onclick="deleteTrailManage('${t.id}', ${JSON.stringify(t.name)})">Delete</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function deleteTrailManage(id, name) {
+      if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`${API}/trails/${id}`, {
+          method: 'DELETE', headers: authHeaders()
+        });
+        if (!res.ok) { const d = await res.json(); alert(d.error || 'Failed to delete.'); return; }
+        reviewLoaded = false;
+        manageTrailsLoaded = false;
+        await loadManageTrails();
+      } catch {
+        alert('Network error — could not delete trail.');
+      }
+    }
+
+    // ── Manage Climbing Routes ────────────────────────────────────────────────
+
+    let manageClimbing = [];
+    let manageClimbingLoaded = false;
+
+    async function loadManageClimbing() {
+      const status = document.getElementById('manage-climbing-status');
+      const wrap   = document.getElementById('manage-climbing-wrap');
+      if (manageClimbingLoaded) { renderManageClimbingTable(); return; }
+      status.textContent = 'Loading climbing routes…';
+      status.style.display = 'block';
+      wrap.style.display = 'none';
+      try {
+        const res = await fetch(`${API}/climbing-manage`, { headers: authHeaders() });
+        manageClimbing = await res.json();
+        manageClimbingLoaded = true;
+        status.style.display = 'none';
+        wrap.style.display = 'block';
+        renderManageClimbingTable();
+      } catch {
+        status.textContent = 'Failed to load climbing routes.';
+        status.style.color = '#f87171';
+      }
+    }
+
+    function renderManageClimbingTable() {
+      const tbody = document.getElementById('manage-climbing-body');
+      if (manageClimbing.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:#444;padding:20px;text-align:center">No climbing routes found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = manageClimbing.map(c => {
+        const summit = c.summit_name || '—';
+        const fr     = c.grade_french || '—';
+        const uiaa   = c.grade_uiaa  || '—';
+        const typeBadge = `<span style="color:#666;font-size:12px">${c.type || '—'}</span>`;
+        return `<tr>
+          <td>${c.name}</td>
+          <td style="color:#666">${summit}</td>
+          <td style="color:#aaa;font-size:12px">${fr}</td>
+          <td style="color:#aaa;font-size:12px">${uiaa}</td>
+          <td>${typeBadge}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-edit"   onclick="openEditClimbing('${c.id}')">Edit</button>
+              <button class="btn-delete" onclick="deleteClimbing('${c.id}', ${JSON.stringify(c.name)})">Delete</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function openEditClimbing(id) {
+      try {
+        const res = await fetch(`/api/climbing-routes/${id}`);
+        if (!res.ok) { alert('Failed to load climbing route data.'); return; }
+        const c = await res.json();
+
+        document.getElementById('ec-id').value          = c.id;
+        document.getElementById('ec-name').value        = c.name || '';
+        document.getElementById('ec-rock').value        = c.rock_type || '';
+        document.getElementById('ec-grade-fr').value    = c.grade_french || '';
+        document.getElementById('ec-grade-uiaa').value  = c.grade_uiaa || '';
+        document.getElementById('ec-grade-alpine').value = c.grade_alpine || '';
+        document.getElementById('ec-length').value      = c.length_m || '';
+        document.getElementById('ec-bolts').value       = c.num_bolts || '';
+        document.getElementById('ec-desc').value        = c.description || '';
+        document.getElementById('ec-desc-sl').value     = c.description_sl || '';
+        document.getElementById('ec-type').value        = c.type || 'sport';
+
+        const srcSel = document.getElementById('cr-summit');
+        const tgtSel = document.getElementById('ec-summit');
+        tgtSel.innerHTML = srcSel.innerHTML;
+        tgtSel.value = c.summit_id || '';
+
+        document.getElementById('ec-msg').style.display = 'none';
+        openModal('modal-edit-climbing');
+      } catch {
+        alert('Error loading climbing route data.');
+      }
+    }
+
+    async function saveEditClimbing() {
+      const id   = document.getElementById('ec-id').value;
+      const name = document.getElementById('ec-name').value.trim();
+      if (!name) { showMsg('ec-msg', 'error', 'Route name is required.'); return; }
+
+      const btn = document.querySelector('#modal-edit-climbing .btn-submit');
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/climbing/${id}`, {
+          method: 'PATCH',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            name,
+            summit_id:    document.getElementById('ec-summit').value      || null,
+            type:         document.getElementById('ec-type').value,
+            rock_type:    document.getElementById('ec-rock').value.trim()        || null,
+            grade_french: document.getElementById('ec-grade-fr').value.trim()    || null,
+            grade_uiaa:   document.getElementById('ec-grade-uiaa').value.trim()  || null,
+            grade_alpine: document.getElementById('ec-grade-alpine').value.trim()|| null,
+            length_m:     parseFloat(document.getElementById('ec-length').value) || null,
+            num_bolts:    parseFloat(document.getElementById('ec-bolts').value)  || null,
+            description:    document.getElementById('ec-desc').value.trim()    || null,
+            description_sl: document.getElementById('ec-desc-sl').value.trim() || null,
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) { showMsg('ec-msg', 'error', data.error || 'Failed to save.'); return; }
+        showMsg('ec-msg', 'success', `Route "${data.name}" saved!`);
+        manageClimbingLoaded = false;
+        await loadManageClimbing();
+        setTimeout(() => closeModal('modal-edit-climbing'), 1500);
+      } catch {
+        showMsg('ec-msg', 'error', 'Network error.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteClimbing(id, name) {
+      if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`${API}/climbing/${id}`, {
+          method: 'DELETE', headers: authHeaders()
+        });
+        if (!res.ok) { const d = await res.json(); alert(d.error || 'Failed to delete.'); return; }
+        manageClimbingLoaded = false;
+        await loadManageClimbing();
+      } catch {
+        alert('Network error — could not delete climbing route.');
       }
     }
 
